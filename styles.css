@@ -1,0 +1,41 @@
+:root{
+  --sheet-max: 1200px;       /* overall width similar to PNG proportions */
+  --gap: 24px;               /* gutter between cards */
+  --bg: #f8f7f5;             /* page tone if needed behind SVGs */
+}
+* { box-sizing: border-box; }
+html,body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  display: grid;
+  place-items: start center;
+  padding: 24px;
+  font-family: "Noto Sans", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Segoe UI Emoji";
+}
+
+/* Two-column sheet like the PNG */
+.sheet{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+  width: min(100%, var(--sheet-max));
+}
+
+/* Each card keeps a 1086×768 aspect like the provided PNG; SVG scales responsively */
+.card{
+  background: transparent;   /* actual visuals are inside the SVGs */
+  aspect-ratio: 1086 / 768;  /* preserves card ratio on resize */
+  width: 100%;
+  display: grid;
+}
+.card-svg{
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Small screens: stack vertically */
+@media (max-width: 800px){
+  .sheet{ grid-template-columns: 1fr; }
+}
