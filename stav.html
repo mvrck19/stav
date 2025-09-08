@@ -8,28 +8,47 @@
 </head>
 <body>
     <div class="container">
-        <div class="question-section">
-            <img src="title.svg" alt="Γραμματική" class="title-left">
-            <div class="content-box">
-                <h2 class="section-title">ΕΡΩΤΗΣΗ</h2>
-                <div class="text-area">κείμενο</div>
-                <img src="vase-cropped.svg" alt="Vase" class="vase-image">
-                <div class="input-area">
-                    <span class="input-label">Σημείωσε την απάντηση σου:</span>
-                    <div class="input-box"></div>
+        <div id="cards-container">
+            <div class="question-section active">
+                <div class="content-box">
+                    <img src="border-cropped.svg" alt="Border" class="border-image">
+                    <img src="title.svg" alt="Γραμματική" class="title">
+                    <div class="content-inner">
+                        <h2 class="section-title">ΕΡΩΤΗΣΗ</h2>
+                        <div class="text-area">κείμενο</div>
+                        <img src="vase-cropped.svg" alt="Vase" class="vase-image">
+                        <form id="questionForm" class="input-area">
+                            <label class="input-label">Σημείωσε την απάντηση σου:</label>
+                            <input type="text" class="input-box" required>
+                            <button type="submit" class="submit-btn">Υποβολή</button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="answer-section">
-            <img src="title.svg" alt="Γραμματική" class="title-right">
-            <div class="content-box">
-                <h2 class="section-title">ΑΠΑΝΤΗΣΗ</h2>
-                <div class="text-area">κείμενο</div>
-                <div class="search-container">
-                    <img src="searchbox-cropped.svg" alt="Search" class="search-box">
+            <div class="answer-section">
+                <div class="content-box">
+                    <img src="border-cropped.svg" alt="Border" class="border-image">
+                    <img src="title.svg" alt="Γραμματική" class="title">
+                    <div class="content-inner">
+                        <h2 class="section-title">ΑΠΑΝΤΗΣΗ</h2>
+                        <div class="text-area">κείμενο</div>
+                        <img src="vase-cropped.svg" alt="Vase" class="vase-image">
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    <script>
+        document.getElementById('questionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const answer = this.querySelector('input').value;
+            if (answer.trim() !== '') {
+                document.querySelector('.question-section').classList.remove('active');
+                document.querySelector('.answer-section').classList.add('active');
+                this.querySelector('input').disabled = true;
+                this.querySelector('button').disabled = true;
+            }
+        });
+    </script>
 </body>
 </html>
