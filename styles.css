@@ -14,44 +14,37 @@ body {
 
 .container {
     width: 100%;
-    max-width: none;
     margin: 0 auto;
-    padding: clamp(1rem, 4vw, 3rem); /* Responsive padding */
+    padding: clamp(0.75rem, 4vw, 1.25rem);
 }
 
 #cards-container {
     position: relative;
     width: 100%;
-    height: clamp(400px, 60vh, 800px); /* Dynamic height based on viewport */
+    height: auto;
 }
 
 .question-section,
 .answer-section {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100%;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    opacity: 1;
+    visibility: visible;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.question-section.active,
-.answer-section.active {
-    opacity: 1;
-    visibility: visible;
+.question-section:not(.active),
+.answer-section:not(.active) {
+    display: none;
 }
 
 .title {
-    position: absolute;
-    top: 2%; /* Percentage-based positioning */
-    left: 50%;
-    transform: translateX(-50%);
-    width: clamp(150px, 25vw, 250px); /* Responsive title width */
-    z-index: 2;
+    position: static;
+    width: clamp(120px, 40vw, 220px);
+    margin: 0 auto clamp(0.5rem,2vh,1rem);
+    transform: none;
 }
 
 .content-box {
@@ -59,10 +52,10 @@ body {
     border-radius: clamp(10px, 2vw, 20px);
     width: 100%;
     position: relative;
-    padding: clamp(0.5rem, 2vw, 1.5rem);
-    margin: 0 clamp(0.5rem, 2vw, 2rem);
-    max-width: none;
-    height: clamp(500px, 70vh, 700px); /* Fixed height for consistency */
+    padding: clamp(0.75rem, 2.5vw, 1.25rem);
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -80,19 +73,18 @@ body {
 .content-inner {
     position: relative;
     z-index: 1;
-    padding: clamp(2rem, 8vh, 4rem) clamp(1rem, 4vw, 3rem);
+    padding: clamp(1rem, 4vw, 1.5rem);
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    height: 100%;
-    margin: 0;
+    gap: clamp(0.5rem,2vh,1rem);
 }
 
 .section-title {
     color: #235789;
-    font-size: clamp(1.2rem, 4vw, 2rem);
-    margin-bottom: clamp(2rem, 5vh, 3rem);
+    font-size: clamp(1rem, 5vw, 1.5rem);
+    margin: 0;
 }
 
 .text-area {
@@ -100,18 +92,16 @@ body {
     width: 100%;
     text-align: center;
     font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-    margin-bottom: clamp(2rem, 5vh, 3rem);
 }
 
 .vase-image {
-    width: clamp(80px, 15vw, 150px);
-    margin-bottom: auto; /* Push content above this to the top */
+    width: clamp(72px, 35vw, 128px);
+    margin: clamp(0.5rem,2vh,1rem) 0;
 }
 
 .input-area {
-    width: clamp(250px, 60%, 500px);
-    margin-top: auto; /* Push to bottom */
-    padding-bottom: clamp(2rem, 5vh, 3rem);
+    width: min(92vw, 360px);
+    margin: clamp(0.5rem,2vh,1rem) auto 0;
 }
 
 .input-label {
@@ -124,14 +114,15 @@ body {
 
 .input-box {
     width: 100%;
-    height: clamp(35px, 6vh, 50px); /* Responsive input height */
+    height: clamp(38px, 5.5vh, 48px);
     border: 1px solid #ccc;
     border-radius: clamp(3px, 0.5vw, 8px);
     padding: 0 clamp(0.5rem, 2vw, 1rem);
-    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    font-size: clamp(0.95rem, 3.5vw, 1.05rem);
 }
 
-.submit-btn {
+.submit-btn,
+.next-btn {
     display: block;
     margin: clamp(0.5rem, 2vh, 1.5rem) auto 0;
     padding: clamp(0.4rem, 1.5vh, 0.7rem) clamp(1rem, 4vw, 2.5rem);
@@ -141,9 +132,12 @@ body {
     border-radius: clamp(3px, 0.5vw, 8px);
     cursor: pointer;
     font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    width: min(60vw, 260px);
+    transition: background-color 0.3s ease;
 }
 
-.submit-btn:hover {
+.submit-btn:hover,
+.next-btn:hover {
     background-color: #1a4266;
 }
 
@@ -152,36 +146,19 @@ body {
     cursor: not-allowed;
 }
 
-.next-btn {
-    display: block;
-    margin-top: auto;
-    padding: clamp(0.4rem, 1.5vh, 0.7rem) clamp(1rem, 4vw, 2.5rem);
-    background-color: #235789;
-    color: white;
-    border: none;
-    border-radius: clamp(3px, 0.5vw, 8px);
-    cursor: pointer;
-    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-    transition: background-color 0.3s ease;
-}
-
-.next-btn:hover {
-    background-color: #1a4266;
-}
-
-/* Media queries for fine-tuning on extreme screen sizes */
-@media (max-width: 480px) {
-    .input-area {
-        width: 90%;
+/* Desktop-up enhancements */
+@media (min-width: 768px) {
+    #cards-container {
+        max-width: 880px;
+        margin: 0 auto;
     }
     
-    .content-inner {
-        padding: 2rem 1rem 1rem;
+    .input-area {
+        width: clamp(300px, 60%, 500px);
     }
-}
-
-@media (min-width: 1200px) {
-    .container {
-        max-width: 1400px;
+    
+    .submit-btn,
+    .next-btn {
+        width: auto;
     }
 }
