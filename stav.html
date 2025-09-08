@@ -15,7 +15,7 @@
                     <img src="title.svg" alt="Γραμματική" class="title">
                     <div class="content-inner">
                         <h2 class="section-title">ΕΡΩΤΗΣΗ</h2>
-                        <div class="text-area">κείμενο</div>
+                        <div class="text-area"></div>
                         <img src="vase-cropped.svg" alt="Vase" class="vase-image">
                         <form id="questionForm" class="input-area">
                             <label class="input-label">Σημείωσε την απάντηση σου:</label>
@@ -31,14 +31,58 @@
                     <img src="title.svg" alt="Γραμματική" class="title">
                     <div class="content-inner">
                         <h2 class="section-title">ΑΠΑΝΤΗΣΗ</h2>
-                        <div class="text-area">κείμενο</div>
+                        <div class="text-area"></div>
                         <img src="vase-cropped.svg" alt="Vase" class="vase-image">
+                        <button id="nextButton" class="next-btn">Επόμενη ερώτηση</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <script>
+        let currentQuestionIndex = 0;
+        let questions = [];
+
+        // Fetch questions from JSON file
+        async function loadQuestions() {
+            try {
+                const response = await fetch('questions.json');
+                const data = await response.json();
+                questions = data.questions;
+                if (questions.length > 0) {
+                    displayQuestion(0);
+                    document.querySelector('.question-section').classList.add('active');
+                } else {
+                    alert('Δεν βρέθηκαν ερωτήσεις.');
+                }
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                alert('Σφάλμα κατά τη φόρτωση των ερωτήσεων.');
+            }
+        }
+
+        // Display current question
+        function displayQuestion(index) {
+            if (index >= questions.length) {
+                return;
+            }
+            
+            const question = questions[index];
+            document.querySelector('.question-section .text-area').textContent = question.question;
+            document.querySelector('.answer-section .text-area').textContent = question.answer;
+            
+            // Reset form
+            const form = document.getElementById('questionForm');
+            form.querySelector('input').value = '';
+            form.querySelector('input').disabled = false;
+            form.querySelector('button').disabled = false;
+            
+            // Update next button text if it's the last question
+            const nextButton = document.getElementById('nextButton');
+            nextButton.textContent = index === questions.length - 1 ? 'Τέλος' : 'Επόμενη ερώτηση';
+        }
+
+        // Handle form submission
         document.getElementById('questionForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const answer = this.querySelector('input').value;
@@ -49,6 +93,26 @@
                 this.querySelector('button').disabled = true;
             }
         });
+
+        // Handle next button click
+        document.getElementById('nextButton').addEventListener('click', function() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex >= questions.length) {
+                // End of questions
+                alert('Συγχαρητήρια! Ολοκληρώσατε όλες τις ερωτήσεις.');
+                // Optional: Reset to first question
+                currentQuestionIndex = 0;
+                displayQuestion(currentQuestionIndex);
+            }
+            
+            // Show next question
+            document.querySelector('.question-section').classList.add('active');
+            document.querySelector('.answer-section').classList.remove('active');
+            displayQuestion(currentQuestionIndex);
+        });
+
+        // Start loading questions when page loads
+        document.addEventListener('DOMContentLoaded', loadQuestions);
     </script>
 </body>
 </html>
