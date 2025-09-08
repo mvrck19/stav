@@ -1,43 +1,35 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="el">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Γραμματική – Ερώτηση / Απάντηση</title>
-  <link rel="stylesheet" href="styles.css" />
-  <!-- Use local webfonts or system fallbacks; SVG text will inherit CSS fonts [GeeksforGeeks SVG-HTML]. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Γραμματική</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- 1) Define both SVGs once as symbols; paste the raw paths/shapes from the two source SVG files here. -->
-  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
-    <defs>
-      <!-- Replace the placeholders below with the exact inner markup from your two SVG assets. -->
-      <symbol id="svg-question-card" viewBox="0 0 1086 768">
-        <!-- PASTE: SVG for the left “ΕΡΩΤΗΣΗ” card (from your question SVG file) -->
-        <!-- ... -->
-      </symbol>
-      <symbol id="svg-answer-card" viewBox="0 0 1086 768">
-        <!-- PASTE: SVG for the right “ΑΠΑΝΤΗΣΗ” card (from your answer SVG file) -->
-        <!-- ... -->
-      </symbol>
-    </defs>
-  </svg>
-
-  <!-- 2) Layout that matches the PNG: two cards on one row with equal widths and matching margins. -->
-  <main class="sheet">
-    <section class="card">
-      <svg class="card-svg" viewBox="0 0 1086 768" role="img" aria-label="ΕΡΩΤΗΣΗ">
-        <use href="#svg-question-card"></use>
-      </svg>
-    </section>
-    <section class="card">
-      <svg class="card-svg" viewBox="0 0 1086 768" role="img" aria-label="ΑΠΑΝΤΗΣΗ">
-        <use href="#svg-answer-card"></use>
-      </svg>
-    </section>
-  </main>
-
-  <!-- Optional dynamic text fill (e.g., replace “κείμενο”) -->
-  <script src="script.js" defer></script>
+    <div class="container">
+        <div class="question-section">
+            <img src="title.svg" alt="Γραμματική" class="title-left">
+            <div class="content-box">
+                <h2 class="section-title">ΕΡΩΤΗΣΗ</h2>
+                <div class="text-area">κείμενο</div>
+                <img src="vase-cropped.svg" alt="Vase" class="vase-image">
+                <div class="input-area">
+                    <span class="input-label">Σημείωσε την απάντηση σου:</span>
+                    <div class="input-box"></div>
+                </div>
+            </div>
+        </div>
+        <div class="answer-section">
+            <img src="title.svg" alt="Γραμματική" class="title-right">
+            <div class="content-box">
+                <h2 class="section-title">ΑΠΑΝΤΗΣΗ</h2>
+                <div class="text-area">κείμενο</div>
+                <div class="search-container">
+                    <img src="searchbox-cropped.svg" alt="Search" class="search-box">
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
