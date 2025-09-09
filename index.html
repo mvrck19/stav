@@ -11,7 +11,12 @@
         <div id="cards-container">
             <div class="question-section active">
                 <div class="content-box">
-                    <img src="question_card.svg" alt="Question Card" class="card-background">
+                    <img src="grammar_q.svg" alt="Question Card" class="card-background">
+                    <div class="card-text question-text">
+                        <h2 class="section-title">ΕΡΩΤΗΣΗ</h2>
+                        <div class="text-area"></div>
+                    </div>
+
                     <form id="questionForm" class="input-area">
                         <label class="input-label">Σημείωσε την απάντηση σου:</label>
                         <input type="text" class="input-box" required>
@@ -21,9 +26,13 @@
             </div>
             <div class="answer-section">
                 <div class="content-box">
-                    <img src="question_card.svg" alt="Answer Card" class="card-background">
-                    <div class="answer-content">
+                    <img src="grammar_a.svg" alt="Answer Card" class="card-background">
+                    <div class="card-text answer-text">
+                        <h2 class="section-title">ΑΠΑΝΤΗΣΗ</h2>
                         <div class="text-area"></div>
+                    </div>
+
+                    <div class="answer-content">
                         <button id="nextButton" class="next-btn">Επόμενη ερώτηση</button>
                     </div>
                 </div>
@@ -58,16 +67,21 @@
                 return;
             }
             
-            const question = questions[index];
-            document.querySelector('.question-section .text-area').textContent = question.question;
-            document.querySelector('.answer-section .text-area').textContent = question.answer;
-            
-            // Reset form
+            const q = questions[index];
+            // fill question card
+            const qText = document.querySelector('.question-section .question-text .text-area');
+            const aText = document.querySelector('.answer-section .answer-text .text-area');
+            qText.textContent = q.question;
+            aText.textContent = q.answer;
+
+            // Reset form (input under the question)
             const form = document.getElementById('questionForm');
-            form.querySelector('input').value = '';
-            form.querySelector('input').disabled = false;
-            form.querySelector('button').disabled = false;
-            
+            const input = form.querySelector('input');
+            const btn = form.querySelector('button');
+            input.value = '';
+            input.disabled = false;
+            btn.disabled = false;
+
             // Update next button text if it's the last question
             const nextButton = document.getElementById('nextButton');
             nextButton.textContent = index === questions.length - 1 ? 'Τέλος' : 'Επόμενη ερώτηση';
@@ -78,10 +92,21 @@
             e.preventDefault();
             const answer = this.querySelector('input').value;
             if (answer.trim() !== '') {
+                // show answer card (answer text is already filled from JSON)
                 document.querySelector('.question-section').classList.remove('active');
                 document.querySelector('.answer-section').classList.add('active');
                 this.querySelector('input').disabled = true;
                 this.querySelector('button').disabled = true;
+                // optionally display user's typed answer somewhere on the answer card
+                const userAns = document.querySelector('.answer-section .answer-text .text-area');
+                // append user's answer below the official answer
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-answer';
+                userDiv.textContent = 'Η απάντησή σου: ' + answer;
+                userDiv.style.marginTop = '8px';
+                userDiv.style.fontStyle = 'italic';
+                userDiv.style.color = '#333';
+                userAns.appendChild(userDiv);
             }
         });
 
