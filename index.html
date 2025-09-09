@@ -11,9 +11,8 @@
         <div id="cards-container">
             <div class="question-section active">
                 <div class="content-box">
-                    <img src="grammar_q.svg" alt="Question Card" class="card-background">
+                    <object id="qSvg" data="grammar_q.svg" type="image/svg+xml" class="card-background" aria-label="Question Card"></object>
                     <div class="card-text question-text">
-                        <h2 class="section-title">ΕΡΩΤΗΣΗ</h2>
                         <div class="text-area"></div>
                     </div>
 
@@ -26,9 +25,8 @@
             </div>
             <div class="answer-section">
                 <div class="content-box">
-                    <img src="grammar_a.svg" alt="Answer Card" class="card-background">
+                    <object id="aSvg" data="grammar_a.svg" type="image/svg+xml" class="card-background" aria-label="Answer Card"></object>
                     <div class="card-text answer-text">
-                        <h2 class="section-title">ΑΠΑΝΤΗΣΗ</h2>
                         <div class="text-area"></div>
                     </div>
 
@@ -133,6 +131,44 @@
 
         // Start loading questions when page loads
         document.addEventListener('DOMContentLoaded', loadQuestions);
+
+        // Hide static titles inside the embedded SVGs if present (they duplicate our HTML overlays)
+        function hideSvgTitles() {
+            // try to access object SVG content
+            const qObj = document.getElementById('qSvg');
+            const aObj = document.getElementById('aSvg');
+
+            function tryHide(obj) {
+                try {
+                    const svg = obj.contentDocument || obj.getSVGDocument && obj.getSVGDocument();
+                    if (svg) {
+                        // hide any <text> nodes that contain 'ΕΡΩΤΗΣΗ' or 'ΑΠΑΝΤΗΣΗ'
+                        const texts = svg.querySelectorAll('text');
+                        texts.forEach(t => {
+                            const txt = (t.textContent || '').trim();
+                            if (txt.includes('ΕΡΩΤΗΣΗ') || txt.includes('ΑΠΑΝΤΗΣΗ')) {
+                                t.style.display = 'none';
+                            }
+                        });
+                    }
+                } catch (e) {
+                    // cross-origin or unsupported; fall back to CSS-based hiding (handled by .card-text overlays)
+                }
+            }
+
+            if (qObj) {
+                qObj.addEventListener('load', () => tryHide(qObj));
+                // try now in case it's already loaded
+                tryHide(qObj);
+            }
+            if (aObj) {
+                aObj.addEventListener('load', () => tryHide(aObj));
+                tryHide(aObj);
+            }
+        }
+
+        // Run hiding after small delay to ensure objects loaded in some browsers
+        setTimeout(hideSvgTitles, 250);
     </script>
 </body>
 </html>
