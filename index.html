@@ -9,7 +9,9 @@
 <body>
     <div class="container">
         <div id="cards-container">
-            <div class="question-section active">
+            <div class="card-3d" id="card3d">
+            <div class="card-inner">
+            <div class="question-section card-face active">
                 <div class="content-box">
                     <object id="qSvg" data="grammar_q.svg" type="image/svg+xml" class="card-background" aria-label="Question Card"></object>
                     <div class="card-text question-text">
@@ -23,7 +25,7 @@
                     </form>
                 </div>
             </div>
-            <div class="answer-section">
+            <div class="answer-section card-face">
                 <div class="content-box">
                     <object id="aSvg" data="grammar_a.svg" type="image/svg+xml" class="card-background" aria-label="Answer Card"></object>
                     <div class="card-text answer-text">
@@ -34,7 +36,9 @@
                         <button id="nextButton" class="next-btn">Επόμενη ερώτηση</button>
                     </div>
                 </div>
+            </div> <!-- .card-inner -->
             </div>
+            </div> <!-- .card-3d -->
         </div>
     </div>
     <script>
@@ -94,7 +98,10 @@
             e.preventDefault();
             const answer = this.querySelector('input').value;
             if (answer.trim() !== '') {
-                // show answer card (answer text is already filled from JSON)
+                // flip to answer card (animation)
+                const card3d = document.getElementById('card3d');
+                if (card3d) card3d.classList.add('flipped');
+                // also toggle visible sections for accessibility
                 document.querySelector('.question-section').classList.remove('active');
                 document.querySelector('.answer-section').classList.add('active');
                 this.querySelector('input').disabled = true;
@@ -123,7 +130,9 @@
                 displayQuestion(currentQuestionIndex);
             }
             
-            // Show next question
+            // flip back to question card and show next
+            const card3d = document.getElementById('card3d');
+            if (card3d) card3d.classList.remove('flipped');
             document.querySelector('.question-section').classList.add('active');
             document.querySelector('.answer-section').classList.remove('active');
             displayQuestion(currentQuestionIndex);
