@@ -52,11 +52,11 @@ body {
 .card-text {
   position: absolute;
   left: 50%;
-  top: 28%;
+  top: 18%; /* moved up so question/answer text stays inside the card */
   transform: translateX(-50%);
   width: 82%;
   max-width: 360px;
-  z-index: 2;
+  z-index: 5; /* ensure overlays sit above the svg artwork */
   pointer-events: none; /* text only */
 }
 
@@ -67,11 +67,11 @@ body {
 .answer-content {
   position: absolute;
   left: 50%;
-  bottom: 12%;
+  bottom: 6%; /* lowered so it doesn't overlap the vase */
   transform: translateX(-50%);
   width: 82%;
   max-width: 360px;
-  z-index: 2;
+  z-index: 5;
   display: flex;
   justify-content: center;
   gap: 12px;
@@ -92,18 +92,30 @@ body {
 .input-area {
   position: absolute;
   left: 50%;
-  top: 48%;
+  bottom: 6%; /* lowered so it sits closer to the card bottom and below the vase */
+  top: auto;
   transform: translateX(-50%);
   width: 82%;
   max-width: 360px;
-  z-index: 2;
-  background: rgba(255,255,255,0.85);
+  z-index: 6; /* above text and svg */
+  background: rgba(255,255,255,0.95);
   padding: 12px;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* Ensure input area stays inside card on narrow/tall cards */
+.question-section .input-area {
+  bottom: 6%;
+}
+
+/* answer-content remains near bottom for the answer card, slightly higher than input */
+.answer-section .answer-content {
+  bottom: 6%;
 }
 
 .input-label {

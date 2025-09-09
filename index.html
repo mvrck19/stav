@@ -74,6 +74,10 @@
             qText.textContent = q.question;
             aText.textContent = q.answer;
 
+            // Remove any previous user answer from the answer card
+            const prevUser = document.querySelectorAll('.answer-section .answer-text .user-answer');
+            prevUser.forEach(n => n.remove());
+
             // Reset form (input under the question)
             const form = document.getElementById('questionForm');
             const input = form.querySelector('input');
