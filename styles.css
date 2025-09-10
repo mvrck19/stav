@@ -83,7 +83,7 @@ body {
 }
 .question-section,
 .answer-section {
-  position: relative;
+  position: absolute;
   text-align: center;
 }
 
