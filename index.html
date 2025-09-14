@@ -8,12 +8,20 @@
 </head>
 <body>
     <div class="container">
-        <div id="cards-container">
+        <div id="category-screen" class="category-screen">
+            <h1 class="app-title">Επιλογή Κατηγορίας</h1>
+            <p class="app-subtitle">Διάλεξε τι θέλεις να εξασκηθείς.</p>
+            <div id="categories" class="categories-list"></div>
+        </div>
+        <div id="cards-container" style="display:none;">
+            <div id="progressBarText" style="position:absolute;top:10px;right:14px;font-size:0.85rem;color:#235789;background:rgba(255,255,255,0.9);padding:6px 10px;border-radius:12px;z-index:50;box-shadow:0 2px 6px rgba(0,0,0,0.12);font-weight:600;letter-spacing:.5px;">
+                0 / 0
+            </div>
             <div class="card-3d" id="card3d">
             <div class="card-inner">
             <div class="question-section card-face active">
                 <div class="content-box">
-                    <object id="qSvg" data="grammar_q.svg" type="image/svg+xml" class="card-background" aria-label="Question Card"></object>
+                    <object id="qSvg" data="syntax_q.svg" type="image/svg+xml" class="card-background" aria-label="Question Card"></object>
                     <div class="card-text question-text">
                         <div class="text-area"></div>
                     </div>
@@ -27,7 +35,7 @@
             </div>
             <div class="answer-section card-face">
                 <div class="content-box">
-                    <object id="aSvg" data="grammar_a.svg" type="image/svg+xml" class="card-background" aria-label="Answer Card"></object>
+                    <object id="aSvg" data="syntax_a.svg" type="image/svg+xml" class="card-background" aria-label="Answer Card"></object>
                     <div class="card-text answer-text">
                         <div class="text-area"></div>
                     </div>
@@ -44,22 +52,67 @@
     <script>
         let currentQuestionIndex = 0;
         let questions = [];
+        let categories = [];
+        let currentCategory = null;
 
-        // Fetch questions from JSON file
-        async function loadQuestions() {
+        // Fetch categories and render category screen
+        async function loadCategories() {
             try {
                 const response = await fetch('questions.json');
                 const data = await response.json();
-                questions = data.questions;
-                if (questions.length > 0) {
-                    displayQuestion(0);
-                    document.querySelector('.question-section').classList.add('active');
-                } else {
-                    alert('Δεν βρέθηκαν ερωτήσεις.');
+                categories = data.categories || [];
+                renderCategories();
+            } catch (e) {
+                console.error(e);
+                alert('Σφάλμα φόρτωσης κατηγοριών');
+            }
+        }
+
+        function renderCategories() {
+            const wrap = document.getElementById('categories');
+            wrap.innerHTML = '';
+            if (!categories.length) {
+                wrap.innerHTML = '<p>Δεν υπάρχουν κατηγορίες.</p>';
+                return;
+            }
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                btn.innerHTML = `<span class="category-title">${cat.title}</span><span class="category-desc">${cat.description || ''}</span>`;
+                btn.addEventListener('click', () => startCategory(cat.id));
+                wrap.appendChild(btn);
+            });
+        }
+
+        function startCategory(id) {
+            const cat = categories.find(c => c.id === id);
+            if (!cat) return;
+            currentCategory = cat;
+            questions = [...cat.questions];
+            currentQuestionIndex = 0;
+            document.getElementById('category-screen').style.display = 'none';
+            document.getElementById('cards-container').style.display = 'block';
+            // swap SVG assets depending on category
+            const qSvg = document.getElementById('qSvg');
+            const aSvg = document.getElementById('aSvg');
+            if (qSvg && aSvg) {
+                if (cat.id === 'grammar') {
+                    qSvg.setAttribute('data', 'grammar_q.svg');
+                    aSvg.setAttribute('data', 'grammar_a.svg');
+                } else if (cat.id === 'syntax') {
+                    qSvg.setAttribute('data', 'syntax_q.svg');
+                    aSvg.setAttribute('data', 'syntax_a.svg');
                 }
-            } catch (error) {
-                console.error('Error loading questions:', error);
-                alert('Σφάλμα κατά τη φόρτωση των ερωτήσεων.');
+            }
+            displayQuestion(0);
+            document.querySelector('.question-section').classList.add('active');
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const progressEl = document.getElementById('progressBarText');
+            if (progressEl) {
+                progressEl.textContent = `${currentQuestionIndex + 1} / ${questions.length}`;
             }
         }
 
@@ -91,6 +144,7 @@
             // Update next button text if it's the last question
             const nextButton = document.getElementById('nextButton');
             nextButton.textContent = index === questions.length - 1 ? 'Τέλος' : 'Επόμενη ερώτηση';
+            updateProgress();
         }
 
         // Handle form submission
@@ -123,11 +177,15 @@
         document.getElementById('nextButton').addEventListener('click', function() {
             currentQuestionIndex++;
             if (currentQuestionIndex >= questions.length) {
-                // End of questions
-                alert('Συγχαρητήρια! Ολοκληρώσατε όλες τις ερωτήσεις.');
-                // Optional: Reset to first question
-                currentQuestionIndex = 0;
-                displayQuestion(currentQuestionIndex);
+                alert('Συγχαρητήρια! Ολοκληρώσατε την κατηγορία.');
+                // return to category selection
+                document.getElementById('cards-container').style.display = 'none';
+                document.getElementById('category-screen').style.display = 'block';
+                const card3d = document.getElementById('card3d');
+                if (card3d) card3d.classList.remove('flipped');
+                document.querySelector('.question-section').classList.add('active');
+                document.querySelector('.answer-section').classList.remove('active');
+                return;
             }
             
             // flip back to question card and show next
@@ -138,8 +196,8 @@
             displayQuestion(currentQuestionIndex);
         });
 
-        // Start loading questions when page loads
-        document.addEventListener('DOMContentLoaded', loadQuestions);
+    // Start loading categories when page loads
+    document.addEventListener('DOMContentLoaded', loadCategories);
 
         // Hide static titles inside the embedded SVGs if present (they duplicate our HTML overlays)
         function hideSvgTitles() {
