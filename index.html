@@ -2,7 +2,9 @@
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Γραμματική</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -44,8 +46,8 @@
             <div id="categories" class="categories-list"></div>
         </div>
         <div id="cards-container" style="display:none;">
-                                    <div style="position:absolute;top:10px;right:14px;z-index:50;">
-                                        <div id="progressBarText" style="font-size:0.8rem;color:#235789;background:rgba(255,255,255,0.9);padding:6px 10px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.12);font-weight:600;letter-spacing:.5px;">0 / 0</div>
+                                    <div class="progress-container">
+                                        <div id="progressBarText" class="progress-text">0 / 0</div>
                                     </div>
             <div class="card-3d" id="card3d">
             <div class="card-inner">
