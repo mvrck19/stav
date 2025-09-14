@@ -7,6 +7,36 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div id="globalScore" class="global-score" style="display:none;">Points: 0</div>
+    <button id="backToCategories" class="back-btn" style="display:none;" aria-label="Επιστροφή στις κατηγορίες">← Κατηγορίες</button>
+    
+    <!-- Session Summary Modal -->
+    <div id="summaryModal" class="summary-modal" style="display:none;">
+        <div class="summary-content">
+            <h2 class="summary-title">Περίληψη Συνεδρίας</h2>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Πόντοι:</span>
+                    <span id="summaryPoints" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Ακρίβεια:</span>
+                    <span id="summaryAccuracy" class="stat-value">0%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Σωστές Απαντήσεις:</span>
+                    <span id="summaryCorrect" class="stat-value">0/0</span>
+                </div>
+                <div id="highScoreNotice" class="high-score-notice" style="display:none;">
+                    🏆 Νέο Ρεκόρ!
+                </div>
+            </div>
+            <div class="summary-actions">
+                <button id="summaryReturnBtn" class="summary-btn primary">Επιστροφή στις Κατηγορίες</button>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
         <div id="category-screen" class="category-screen">
             <h1 class="app-title">Επιλογή Κατηγορίας</h1>
@@ -14,9 +44,9 @@
             <div id="categories" class="categories-list"></div>
         </div>
         <div id="cards-container" style="display:none;">
-            <div id="progressBarText" style="position:absolute;top:10px;right:14px;font-size:0.85rem;color:#235789;background:rgba(255,255,255,0.9);padding:6px 10px;border-radius:12px;z-index:50;box-shadow:0 2px 6px rgba(0,0,0,0.12);font-weight:600;letter-spacing:.5px;">
-                0 / 0
-            </div>
+                                    <div style="position:absolute;top:10px;right:14px;z-index:50;">
+                                        <div id="progressBarText" style="font-size:0.8rem;color:#235789;background:rgba(255,255,255,0.9);padding:6px 10px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.12);font-weight:600;letter-spacing:.5px;">0 / 0</div>
+                                    </div>
             <div class="card-3d" id="card3d">
             <div class="card-inner">
             <div class="question-section card-face active">
@@ -26,11 +56,10 @@
                         <div class="text-area"></div>
                     </div>
 
-                    <form id="questionForm" class="input-area">
-                        <label class="input-label">Σημείωσε την απάντηση σου:</label>
-                        <input type="text" class="input-box" required>
-                        <button type="submit" class="submit-btn">Υποβολή</button>
-                    </form>
+                    <div id="choicesContainer" class="choices-area"></div>
+                    <div id="choiceActions" class="choice-actions" style="display:none;">
+                        <button id="confirmButton" type="button" class="confirm-btn" disabled>Επιβεβαίωση</button>
+                    </div>
                 </div>
             </div>
             <div class="answer-section card-face">
@@ -41,7 +70,8 @@
                     </div>
 
                     <div class="answer-content">
-                        <button id="nextButton" class="next-btn">Επόμενη ερώτηση</button>
+                        <button id="prevButton" class="prev-btn" type="button" style="display:none;">Προηγούμενη</button>
+                        <button id="nextButton" class="next-btn" type="button">Επόμενη ερώτηση</button>
                     </div>
                 </div>
             </div> <!-- .card-inner -->
@@ -54,6 +84,46 @@
         let questions = [];
         let categories = [];
         let currentCategory = null;
+    let answeredMap = {}; // key: question id => { chosenIndex, correct }
+    let score = 0; // points: 10 per correct
+    let targetScore = 0; // used for animation
+    let scoreAnimating = false;
+    let totalAnswered = 0;
+    let shuffledChoicesCache = {}; // question id -> array of {text, originalIndex}
+    let inReview = false;
+    let highScores = {}; // category id -> highest score
+
+        // Load high scores from localStorage
+        function loadHighScores() {
+            try {
+                const stored = localStorage.getItem('quizHighScores');
+                if (stored) {
+                    highScores = JSON.parse(stored);
+                }
+            } catch (e) {
+                highScores = {};
+            }
+        }
+
+        // Save high scores to localStorage
+        function saveHighScores() {
+            try {
+                localStorage.setItem('quizHighScores', JSON.stringify(highScores));
+            } catch (e) {
+                // localStorage not available
+            }
+        }
+
+        // Update high score for category
+        function updateHighScore(categoryId, newScore) {
+            const currentHigh = highScores[categoryId] || 0;
+            if (newScore > currentHigh) {
+                highScores[categoryId] = newScore;
+                saveHighScores();
+                return true; // new record
+            }
+            return false;
+        }
 
         // Fetch categories and render category screen
         async function loadCategories() {
@@ -61,6 +131,7 @@
                 const response = await fetch('questions.json');
                 const data = await response.json();
                 categories = data.categories || [];
+                loadHighScores();
                 renderCategories();
             } catch (e) {
                 console.error(e);
@@ -78,7 +149,9 @@
             categories.forEach(cat => {
                 const btn = document.createElement('button');
                 btn.className = 'category-btn';
-                btn.innerHTML = `<span class="category-title">${cat.title}</span><span class="category-desc">${cat.description || ''}</span>`;
+                const highScore = highScores[cat.id] || 0;
+                const highScoreText = highScore > 0 ? `<span class="high-score">Καλύτερο: ${highScore} πόντοι</span>` : '';
+                btn.innerHTML = `<span class="category-title">${cat.title}</span><span class="category-desc">${cat.description || ''}</span>${highScoreText}`;
                 btn.addEventListener('click', () => startCategory(cat.id));
                 wrap.appendChild(btn);
             });
@@ -90,6 +163,20 @@
             currentCategory = cat;
             questions = [...cat.questions];
             currentQuestionIndex = 0;
+            answeredMap = {};
+            score = 0;
+            targetScore = 0;
+            totalAnswered = 0;
+            shuffledChoicesCache = {};
+            inReview = false;
+            // show score only in game
+            const globalScore = document.getElementById('globalScore');
+            if (globalScore) {
+                globalScore.style.display = 'flex';
+                globalScore.textContent = 'Points: 0';
+            }
+            const backBtn = document.getElementById('backToCategories');
+            if (backBtn) backBtn.style.display = 'flex';
             document.getElementById('category-screen').style.display = 'none';
             document.getElementById('cards-container').style.display = 'block';
             // swap SVG assets depending on category
@@ -107,6 +194,8 @@
             displayQuestion(0);
             document.querySelector('.question-section').classList.add('active');
             updateProgress();
+            updateScore(true);
+            updatePrevButton();
         }
 
         function updateProgress() {
@@ -127,64 +216,249 @@
             const qText = document.querySelector('.question-section .question-text .text-area');
             const aText = document.querySelector('.answer-section .answer-text .text-area');
             qText.textContent = q.question;
-            aText.textContent = q.answer;
+            aText.textContent = '';
+
+            // render choices (with shuffle caching)
+            const choicesWrap = document.getElementById('choicesContainer');
+            const confirmBtn = document.getElementById('confirmButton');
+            const choiceActions = document.getElementById('choiceActions');
+            confirmBtn.disabled = true;
+            choiceActions.style.display = 'flex';
+            choicesWrap.innerHTML = '';
+            let choicesWithOriginal;
+            if (shuffledChoicesCache[q.id]) {
+                choicesWithOriginal = shuffledChoicesCache[q.id];
+            } else {
+                choicesWithOriginal = q.choices.map((text, originalIndex) => ({ text, originalIndex }));
+                shuffleArray(choicesWithOriginal);
+                shuffledChoicesCache[q.id] = choicesWithOriginal;
+            }
+            choicesWithOriginal.forEach((obj, renderedIndex) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.type = 'button';
+                btn.textContent = obj.text;
+                btn.dataset.originalIndex = obj.originalIndex;
+                btn.addEventListener('click', () => selectChoice(renderedIndex));
+                choicesWrap.appendChild(btn);
+            });
+
+            // If already answered (review or navigating back), mark selection and show answer side
+            const answered = answeredMap[q.id];
+            if (answered) {
+                // disable selection and show answer side
+                choicesWrap.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+                confirmBtn.disabled = true;
+                choiceActions.style.display = 'none';
+                // prepare answer card content for review
+                const aText = document.querySelector('.answer-section .answer-text .text-area');
+                renderAnswerReview(q, answered.chosenIndex, aText);
+                // show answer side (review mode)
+                document.getElementById('card3d').classList.add('flipped');
+                document.querySelector('.question-section').classList.remove('active');
+                document.querySelector('.answer-section').classList.add('active');
+            } else {
+                // ensure we are on question side unless in forced review mode
+                const card3d = document.getElementById('card3d');
+                card3d.classList.remove('flipped');
+                document.querySelector('.question-section').classList.add('active');
+                document.querySelector('.answer-section').classList.remove('active');
+            }
 
             // Remove any previous user answer from the answer card
             const prevUser = document.querySelectorAll('.answer-section .answer-text .user-answer');
             prevUser.forEach(n => n.remove());
 
-            // Reset form (input under the question)
-            const form = document.getElementById('questionForm');
-            const input = form.querySelector('input');
-            const btn = form.querySelector('button');
-            input.value = '';
-            input.disabled = false;
-            btn.disabled = false;
-
             // Update next button text if it's the last question
             const nextButton = document.getElementById('nextButton');
             nextButton.textContent = index === questions.length - 1 ? 'Τέλος' : 'Επόμενη ερώτηση';
             updateProgress();
+            updatePrevButton();
         }
 
-        // Handle form submission
-        document.getElementById('questionForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const answer = this.querySelector('input').value;
-            if (answer.trim() !== '') {
-                // flip to answer card (animation)
-                const card3d = document.getElementById('card3d');
-                if (card3d) card3d.classList.add('flipped');
-                // also toggle visible sections for accessibility
-                document.querySelector('.question-section').classList.remove('active');
-                document.querySelector('.answer-section').classList.add('active');
-                this.querySelector('input').disabled = true;
-                this.querySelector('button').disabled = true;
-                // optionally display user's typed answer somewhere on the answer card
-                const userAns = document.querySelector('.answer-section .answer-text .text-area');
-                // append user's answer below the official answer
-                const userDiv = document.createElement('div');
-                userDiv.className = 'user-answer';
-                userDiv.textContent = 'Η απάντησή σου: ' + answer;
-                userDiv.style.marginTop = '8px';
-                userDiv.style.fontStyle = 'italic';
-                userDiv.style.color = '#333';
-                userAns.appendChild(userDiv);
+        function selectChoice(renderedIndex) {
+            const q = questions[currentQuestionIndex];
+            if (!q) return;
+            const choicesWrap = document.getElementById('choicesContainer');
+            const confirmBtn = document.getElementById('confirmButton');
+            choicesWrap.querySelectorAll('.choice-btn').forEach((b,i) => {
+                b.classList.toggle('selected', i === renderedIndex);
+            });
+            confirmBtn.disabled = false;
+            confirmBtn.dataset.selectedRenderedIndex = renderedIndex;
+        }
+
+        document.getElementById('confirmButton').addEventListener('click', () => {
+            const q = questions[currentQuestionIndex];
+            if (!q) return;
+            const confirmBtn = document.getElementById('confirmButton');
+            const renderedIndex = parseInt(confirmBtn.dataset.selectedRenderedIndex, 10);
+            if (isNaN(renderedIndex)) return;
+            evaluateAnswer(renderedIndex);
+        });
+
+        function evaluateAnswer(renderedIndex) {
+            const q = questions[currentQuestionIndex];
+            const choicesWrap = document.getElementById('choicesContainer');
+            const mapped = shuffledChoicesCache[q.id];
+            const chosenObj = mapped[renderedIndex];
+            const chosenOriginalIndex = chosenObj.originalIndex;
+            const correct = chosenOriginalIndex === q.correctIndex;
+            answeredMap[q.id] = { chosenIndex: chosenOriginalIndex, correct };
+            totalAnswered = Object.keys(answeredMap).length;
+            if (correct) score += 10; // add 10 points for correct answer
+            persistState();
+            // flip
+            const card3d = document.getElementById('card3d');
+            card3d.classList.add('flipped');
+            document.querySelector('.question-section').classList.remove('active');
+            document.querySelector('.answer-section').classList.add('active');
+            const aText = document.querySelector('.answer-section .answer-text .text-area');
+            renderAnswerReview(q, chosenOriginalIndex, aText);
+            // highlight buttons
+            choicesWrap.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+            // we need to highlight based on original index mapping
+            choicesWrap.querySelectorAll('.choice-btn').forEach((b,i) => {
+                const orig = parseInt(b.dataset.originalIndex,10);
+                if (orig === q.correctIndex) b.classList.add('choice-correct');
+                if (i === renderedIndex && orig !== q.correctIndex) b.classList.add('choice-wrong');
+            });
+            document.getElementById('confirmButton').disabled = true;
+            document.getElementById('choiceActions').style.display = 'none';
+            updateScore(false, correct); // animate only if correct
+        }
+
+        function renderAnswerReview(q, chosenOriginalIndex, container) {
+            const correct = q.correctIndex === chosenOriginalIndex;
+            container.innerHTML = '';
+            const userDiv = document.createElement('div');
+            userDiv.className = 'user-answer';
+            userDiv.innerHTML = `<strong>${correct ? 'Σωστό!' : 'Λάθος.'}</strong><br>Η επιλογή σου: ${q.choices[chosenOriginalIndex]}<br>`;
+            const explain = document.createElement('div');
+            explain.style.marginTop = '6px';
+            explain.textContent = q.explanation || '';
+            container.appendChild(userDiv);
+            container.appendChild(explain);
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function updateScore(immediate=false, animate=false) {
+            const scoreEl = document.getElementById('globalScore');
+            if (!scoreEl) return;
+            if (immediate || !animate) {
+                scoreEl.textContent = `Points: ${score}`;
+                return;
+            }
+            if (scoreAnimating) return; // simple guard to avoid overlap
+            scoreAnimating = true;
+            const start = performance.now();
+            const initial = parseInt(scoreEl.textContent.replace(/\D/g,'')||'0',10);
+            const from = initial;
+            const to = score;
+            const duration = 450;
+            scoreEl.classList.add('score-anim');
+            function step(ts){
+                const t = Math.min(1, (ts-start)/duration);
+                const eased = t<0.5 ? 2*t*t : -1+(4-2*t)*t; // ease in-out quad
+                const current = Math.round(from + (to-from)*eased);
+                scoreEl.textContent = `Points: ${current}`;
+                if (t < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    scoreAnimating = false;
+                    setTimeout(()=>scoreEl.classList.remove('score-anim'),120);
+                }
+            }
+            requestAnimationFrame(step);
+        }
+
+        function updatePrevButton() {
+            const prevBtn = document.getElementById('prevButton');
+            if (!prevBtn) return;
+            prevBtn.style.display = currentQuestionIndex > 0 ? 'inline-block' : 'none';
+        }
+
+        document.getElementById('prevButton').addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion(currentQuestionIndex);
             }
         });
+
+    // Back to categories handler
+    const backBtnEl = document.getElementById('backToCategories');
+    if (backBtnEl) {
+        backBtnEl.addEventListener('click', () => {
+            // Show session summary before returning
+            showSessionSummary(false);
+        });
+    }
+
+    // Summary modal return button handler
+    const summaryReturnBtn = document.getElementById('summaryReturnBtn');
+    if (summaryReturnBtn) {
+        summaryReturnBtn.addEventListener('click', hideSummaryAndReturn);
+    }        // Show session summary modal
+        function showSessionSummary(isCompletion = false) {
+            const correctAnswers = Object.values(answeredMap).filter(a => a.correct).length;
+            const totalQuestions = questions.length;
+            const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+            
+            // Check for new high score
+            const isNewRecord = updateHighScore(currentCategory.id, score);
+            
+            // Update modal content
+            document.getElementById('summaryPoints').textContent = score;
+            document.getElementById('summaryAccuracy').textContent = `${accuracy}%`;
+            document.getElementById('summaryCorrect').textContent = `${correctAnswers}/${totalQuestions}`;
+            
+            const highScoreNotice = document.getElementById('highScoreNotice');
+            if (isNewRecord) {
+                highScoreNotice.style.display = 'block';
+            } else {
+                highScoreNotice.style.display = 'none';
+            }
+            
+            // Show modal
+            document.getElementById('summaryModal').style.display = 'flex';
+        }
+
+        // Hide session summary modal and return to categories
+        function hideSummaryAndReturn() {
+            document.getElementById('summaryModal').style.display = 'none';
+            document.getElementById('cards-container').style.display = 'none';
+            document.getElementById('category-screen').style.display = 'block';
+            const globalScore = document.getElementById('globalScore');
+            if (globalScore) globalScore.style.display = 'none';
+            const backBtn = document.getElementById('backToCategories');
+            if (backBtn) backBtn.style.display = 'none';
+            // Reset state
+            answeredMap = {};
+            score = 0;
+            targetScore = 0;
+            totalAnswered = 0;
+            shuffledChoicesCache = {};
+            currentCategory = null;
+            currentQuestionIndex = 0;
+            // Re-render categories to show updated high scores
+            renderCategories();
+        }
+
+        // persistence removed per new requirement (fresh each start)
+        function persistState() { /* no-op */ }
 
         // Handle next button click
         document.getElementById('nextButton').addEventListener('click', function() {
             currentQuestionIndex++;
             if (currentQuestionIndex >= questions.length) {
-                alert('Συγχαρητήρια! Ολοκληρώσατε την κατηγορία.');
-                // return to category selection
-                document.getElementById('cards-container').style.display = 'none';
-                document.getElementById('category-screen').style.display = 'block';
-                const card3d = document.getElementById('card3d');
-                if (card3d) card3d.classList.remove('flipped');
-                document.querySelector('.question-section').classList.add('active');
-                document.querySelector('.answer-section').classList.remove('active');
+                // Show session summary instead of immediate return
+                showSessionSummary(true);
                 return;
             }
             
@@ -194,6 +468,7 @@
             document.querySelector('.question-section').classList.add('active');
             document.querySelector('.answer-section').classList.remove('active');
             displayQuestion(currentQuestionIndex);
+            persistState();
         });
 
     // Start loading categories when page loads
