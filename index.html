@@ -40,41 +40,25 @@
     </div>
     
     <div class="container">
-        <div id="category-screen" class="category-screen">
+        <div id="category-screen" class="category-screen" style="display:block;">
             <h1 class="app-title">Επιλογή Κατηγορίας</h1>
             <p class="app-subtitle">Διάλεξε τι θέλεις να εξασκηθείς.</p>
             <div id="categories" class="categories-list"></div>
         </div>
         <div id="cards-container" style="display:none;">
-                                    <div class="progress-container">
-                                        <div id="progressBarText" class="progress-text">0 / 0</div>
+            <div class="progress-container">
+                <div id="progressBarText" class="progress-text">0 / 0</div>
                                     </div>
             <div class="card-3d" id="card3d">
             <div class="card-inner">
             <div class="question-section card-face active">
                 <div class="content-box">
                     <object id="qSvg" data="syntax_q.svg" type="image/svg+xml" class="card-background" aria-label="Question Card"></object>
-                    <div class="card-text question-text">
-                        <div class="text-area"></div>
-                    </div>
-
-                    <div id="choicesContainer" class="choices-area"></div>
-                    <div id="choiceActions" class="choice-actions" style="display:none;">
-                        <button id="confirmButton" type="button" class="confirm-btn" disabled>Επιβεβαίωση</button>
-                    </div>
                 </div>
             </div>
             <div class="answer-section card-face">
                 <div class="content-box">
                     <object id="aSvg" data="syntax_a.svg" type="image/svg+xml" class="card-background" aria-label="Answer Card"></object>
-                    <div class="card-text answer-text">
-                        <div class="text-area"></div>
-                    </div>
-
-                    <div class="answer-content">
-                        <button id="prevButton" class="prev-btn" type="button" style="display:none;">Προηγούμενη</button>
-                        <button id="nextButton" class="next-btn" type="button">Επόμενη ερώτηση</button>
-                    </div>
                 </div>
             </div> <!-- .card-inner -->
             </div>
@@ -214,94 +198,145 @@
             }
             
             const q = questions[index];
-            // fill question card
-            const qText = document.querySelector('.question-section .question-text .text-area');
-            const aText = document.querySelector('.answer-section .answer-text .text-area');
-            qText.textContent = q.question;
-            aText.textContent = '';
-
-            // render choices (with shuffle caching)
-            const choicesWrap = document.getElementById('choicesContainer');
-            const confirmBtn = document.getElementById('confirmButton');
-            const choiceActions = document.getElementById('choiceActions');
-            confirmBtn.disabled = true;
-            choiceActions.style.display = 'flex';
-            choicesWrap.innerHTML = '';
-            let choicesWithOriginal;
-            if (shuffledChoicesCache[q.id]) {
-                choicesWithOriginal = shuffledChoicesCache[q.id];
-            } else {
-                choicesWithOriginal = q.choices.map((text, originalIndex) => ({ text, originalIndex }));
-                shuffleArray(choicesWithOriginal);
-                shuffledChoicesCache[q.id] = choicesWithOriginal;
-            }
-            choicesWithOriginal.forEach((obj, renderedIndex) => {
-                const btn = document.createElement('button');
-                btn.className = 'choice-btn';
-                btn.type = 'button';
-                btn.textContent = obj.text;
-                btn.dataset.originalIndex = obj.originalIndex;
-                btn.addEventListener('click', () => selectChoice(renderedIndex));
-                choicesWrap.appendChild(btn);
-            });
-
-            // If already answered (review or navigating back), mark selection and show answer side
+            
+            // Update question and choices in SVG
+            updateQuestionInSVG(q);
+            
+            // If already answered (review or navigating back), show answer side
             const answered = answeredMap[q.id];
             if (answered) {
-                // disable selection and show answer side
-                choicesWrap.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
-                confirmBtn.disabled = true;
-                choiceActions.style.display = 'none';
-                // prepare answer card content for review
-                const aText = document.querySelector('.answer-section .answer-text .text-area');
-                renderAnswerReview(q, answered.chosenIndex, aText);
                 // show answer side (review mode)
                 document.getElementById('card3d').classList.add('flipped');
                 document.querySelector('.question-section').classList.remove('active');
                 document.querySelector('.answer-section').classList.add('active');
+                updateAnswerInSVG(q, answered.chosenIndex);
             } else {
-                // ensure we are on question side unless in forced review mode
+                // ensure we are on question side
                 const card3d = document.getElementById('card3d');
                 card3d.classList.remove('flipped');
                 document.querySelector('.question-section').classList.add('active');
                 document.querySelector('.answer-section').classList.remove('active');
             }
 
-            // Remove any previous user answer from the answer card
-            const prevUser = document.querySelectorAll('.answer-section .answer-text .user-answer');
-            prevUser.forEach(n => n.remove());
-
-            // Update next button text if it's the last question
-            const nextButton = document.getElementById('nextButton');
-            nextButton.textContent = index === questions.length - 1 ? 'Τέλος' : 'Επόμενη ερώτηση';
             updateProgress();
             updatePrevButton();
         }
 
-        function selectChoice(renderedIndex) {
-            const q = questions[currentQuestionIndex];
-            if (!q) return;
-            const choicesWrap = document.getElementById('choicesContainer');
-            const confirmBtn = document.getElementById('confirmButton');
-            choicesWrap.querySelectorAll('.choice-btn').forEach((b,i) => {
-                b.classList.toggle('selected', i === renderedIndex);
-            });
-            confirmBtn.disabled = false;
-            confirmBtn.dataset.selectedRenderedIndex = renderedIndex;
+        // Update question and choices in SVG
+        function updateQuestionInSVG(q) {
+            const qSvgObj = document.getElementById('qSvg');
+            console.log('Updating SVG with question:', q.question);
+            
+            function tryUpdateSVG() {
+                try {
+                    const svgDoc = qSvgObj.contentDocument;
+                    if (!svgDoc) {
+                        console.log('SVG document not available yet');
+                        return false;
+                    }
+                    
+                    console.log('SVG document found, looking for elements...');
+                    
+                    // Try multiple selectors
+                    let qTextDiv = svgDoc.getElementById('question-text');
+                    if (!qTextDiv) {
+                        qTextDiv = svgDoc.querySelector('.question-text .text-area');
+                    }
+                    if (!qTextDiv) {
+                        qTextDiv = svgDoc.querySelector('.text-area');
+                    }
+                    
+                    let choicesArea = svgDoc.getElementById('choices-area');
+                    if (!choicesArea) {
+                        choicesArea = svgDoc.querySelector('.choices-area');
+                    }
+                    
+                    console.log('Found elements:', { qTextDiv, choicesArea });
+                    
+                    if (qTextDiv) {
+                        qTextDiv.textContent = q.question;
+                        console.log('Updated question text to:', q.question);
+                    }
+                    
+                    if (choicesArea) {
+                        choicesArea.innerHTML = '';
+                        
+                        // Handle shuffled choices
+                        let choicesWithOriginal;
+                        if (shuffledChoicesCache[q.id]) {
+                            choicesWithOriginal = shuffledChoicesCache[q.id];
+                        } else {
+                            choicesWithOriginal = q.choices.map((text, originalIndex) => ({ text, originalIndex }));
+                            shuffleArray(choicesWithOriginal);
+                            shuffledChoicesCache[q.id] = choicesWithOriginal;
+                        }
+                        
+                        choicesWithOriginal.forEach((obj, renderedIndex) => {
+                            const btn = document.createElement('div');
+                            btn.className = 'choice-btn';
+                            btn.textContent = obj.text;
+                            btn.dataset.originalIndex = obj.originalIndex;
+                            btn.onclick = () => selectChoiceInSVG(renderedIndex);
+                            choicesArea.appendChild(btn);
+                        });
+                        
+                        console.log('Added', choicesWithOriginal.length, 'choice buttons');
+                    }
+                    return true;
+                } catch (e) {
+                    console.error('Error accessing SVG content:', e);
+                    return false;
+                }
+            }
+            
+            // Try immediately if SVG is loaded
+            if (qSvgObj) {
+                if (tryUpdateSVG()) {
+                    return;
+                }
+                
+                // Otherwise wait for load event
+                console.log('SVG not ready, waiting for load event...');
+                qSvgObj.addEventListener('load', () => {
+                    console.log('SVG loaded, trying update again...');
+                    setTimeout(() => tryUpdateSVG(), 100); // small delay to ensure content is ready
+                }, { once: true });
+            }
         }
 
-        document.getElementById('confirmButton').addEventListener('click', () => {
+        // Update answer in SVG
+        function updateAnswerInSVG(q, chosenOriginalIndex) {
+            const aSvgObj = document.getElementById('aSvg');
+            if (aSvgObj && aSvgObj.contentDocument) {
+                try {
+                    const svgDoc = aSvgObj.contentDocument;
+                    const answerCard = svgDoc.getElementById('answer-card');
+                    
+                    if (answerCard) {
+                        const correct = q.correctIndex === chosenOriginalIndex;
+                        answerCard.innerHTML = `
+                            <strong>${correct ? 'Σωστό!' : 'Λάθος.'}</strong><br>
+                            Η επιλογή σου: ${q.choices[chosenOriginalIndex]}<br>
+                            <div style="margin-top: 6px;">${q.explanation || ''}</div>
+                        `;
+                    }
+                } catch (e) {
+                    console.warn('Could not access answer SVG content:', e);
+                }
+            }
+        }
+
+        function selectChoiceInSVG(renderedIndex) {
             const q = questions[currentQuestionIndex];
             if (!q) return;
-            const confirmBtn = document.getElementById('confirmButton');
-            const renderedIndex = parseInt(confirmBtn.dataset.selectedRenderedIndex, 10);
-            if (isNaN(renderedIndex)) return;
+            
+            // Immediately evaluate answer when choice is clicked
             evaluateAnswer(renderedIndex);
-        });
+        }
+
 
         function evaluateAnswer(renderedIndex) {
             const q = questions[currentQuestionIndex];
-            const choicesWrap = document.getElementById('choicesContainer');
             const mapped = shuffledChoicesCache[q.id];
             const chosenObj = mapped[renderedIndex];
             const chosenOriginalIndex = chosenObj.originalIndex;
@@ -310,24 +345,51 @@
             totalAnswered = Object.keys(answeredMap).length;
             if (correct) score += 10; // add 10 points for correct answer
             persistState();
-            // flip
-            const card3d = document.getElementById('card3d');
-            card3d.classList.add('flipped');
-            document.querySelector('.question-section').classList.remove('active');
-            document.querySelector('.answer-section').classList.add('active');
-            const aText = document.querySelector('.answer-section .answer-text .text-area');
-            renderAnswerReview(q, chosenOriginalIndex, aText);
-            // highlight buttons
-            choicesWrap.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
-            // we need to highlight based on original index mapping
-            choicesWrap.querySelectorAll('.choice-btn').forEach((b,i) => {
-                const orig = parseInt(b.dataset.originalIndex,10);
-                if (orig === q.correctIndex) b.classList.add('choice-correct');
-                if (i === renderedIndex && orig !== q.correctIndex) b.classList.add('choice-wrong');
-            });
-            document.getElementById('confirmButton').disabled = true;
-            document.getElementById('choiceActions').style.display = 'none';
+            
+            // Update SVG choices to show correct/wrong
+            const qSvgObj = document.getElementById('qSvg');
+            if (qSvgObj && qSvgObj.contentDocument) {
+                try {
+                    const svgDoc = qSvgObj.contentDocument;
+                    const choiceBtns = svgDoc.querySelectorAll('.choices-area .choice-btn');
+                    choiceBtns.forEach((btn, i) => {
+                        const orig = parseInt(btn.dataset.originalIndex, 10);
+                        btn.onclick = null; // disable further clicks
+                        btn.style.cursor = 'default';
+                        if (orig === q.correctIndex) {
+                            btn.style.backgroundColor = '#4ade80'; // green for correct
+                            btn.style.borderColor = '#16a34a';
+                        }
+                        if (i === renderedIndex && orig !== q.correctIndex) {
+                            btn.style.backgroundColor = '#f87171'; // red for wrong
+                            btn.style.borderColor = '#dc2626';
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Could not update choice colors:', e);
+                }
+            }
+            
+            // flip to answer side
+            setTimeout(() => {
+                const card3d = document.getElementById('card3d');
+                card3d.classList.add('flipped');
+                document.querySelector('.question-section').classList.remove('active');
+                document.querySelector('.answer-section').classList.add('active');
+                updateAnswerInSVG(q, chosenOriginalIndex);
+            }, 1000); // delay to show the color feedback
+            
             updateScore(false, correct); // animate only if correct
+            
+            // Auto-advance to next question after showing answer
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex >= questions.length) {
+                    showSessionSummary(true);
+                } else {
+                    displayQuestion(currentQuestionIndex);
+                }
+            }, 3000); // show answer for 3 seconds
         }
 
         function renderAnswerReview(q, chosenOriginalIndex, container) {
@@ -381,17 +443,8 @@
         }
 
         function updatePrevButton() {
-            const prevBtn = document.getElementById('prevButton');
-            if (!prevBtn) return;
-            prevBtn.style.display = currentQuestionIndex > 0 ? 'inline-block' : 'none';
+            // prevButton element no longer exists - functionality moved to SVG
         }
-
-        document.getElementById('prevButton').addEventListener('click', () => {
-            if (currentQuestionIndex > 0) {
-                currentQuestionIndex--;
-                displayQuestion(currentQuestionIndex);
-            }
-        });
 
     // Back to categories handler
     const backBtnEl = document.getElementById('backToCategories');
@@ -455,23 +508,6 @@
         // persistence removed per new requirement (fresh each start)
         function persistState() { /* no-op */ }
 
-        // Handle next button click
-        document.getElementById('nextButton').addEventListener('click', function() {
-            currentQuestionIndex++;
-            if (currentQuestionIndex >= questions.length) {
-                // Show session summary instead of immediate return
-                showSessionSummary(true);
-                return;
-            }
-            
-            // flip back to question card and show next
-            const card3d = document.getElementById('card3d');
-            if (card3d) card3d.classList.remove('flipped');
-            document.querySelector('.question-section').classList.add('active');
-            document.querySelector('.answer-section').classList.remove('active');
-            displayQuestion(currentQuestionIndex);
-            persistState();
-        });
 
     // Start loading categories when page loads
     document.addEventListener('DOMContentLoaded', loadCategories);
