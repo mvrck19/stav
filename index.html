@@ -211,11 +211,34 @@
                 document.querySelector('.answer-section').classList.add('active');
                 updateAnswerInSVG(q, answered.chosenIndex);
             } else {
-                // ensure we are on question side
+                // ensure we are on question side and reset submit button
                 const card3d = document.getElementById('card3d');
                 card3d.classList.remove('flipped');
                 document.querySelector('.question-section').classList.add('active');
                 document.querySelector('.answer-section').classList.remove('active');
+                
+                // Hide submit button for new questions
+                setTimeout(() => {
+                    const qSvgObj = document.getElementById('qSvg');
+                    if (qSvgObj && qSvgObj.contentDocument) {
+                        try {
+                            const svgDoc = qSvgObj.contentDocument;
+                            const foreignObject = svgDoc.querySelector('foreignObject');
+                            if (foreignObject) {
+                                const htmlBody = foreignObject.querySelector('body');
+                                if (htmlBody) {
+                                    const submitBtn = htmlBody.querySelector('#submit-btn');
+                                    if (submitBtn) {
+                                        submitBtn.style.display = 'none';
+                                        submitBtn.disabled = true;
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Could not reset submit button:', e);
+                        }
+                    }
+                }, 100);
             }
 
             updateProgress();
@@ -237,29 +260,42 @@
                     
                     console.log('SVG document found, looking for elements...');
                     
-                    // Try multiple selectors
-                    let qTextDiv = svgDoc.getElementById('question-text');
-                    if (!qTextDiv) {
-                        qTextDiv = svgDoc.querySelector('.question-text .text-area');
-                    }
-                    if (!qTextDiv) {
-                        qTextDiv = svgDoc.querySelector('.text-area');
+                    // Look for foreignObject and then HTML elements inside it
+                    const foreignObject = svgDoc.querySelector('foreignObject');
+                    if (!foreignObject) {
+                        console.log('No foreignObject found');
+                        return false;
                     }
                     
-                    let choicesArea = svgDoc.getElementById('choices-area');
+                    const htmlBody = foreignObject.querySelector('body');
+                    if (!htmlBody) {
+                        console.log('No body element found in foreignObject');
+                        return false;
+                    }
+                    
+                    // Find elements within the HTML body
+                    let qTextDiv = htmlBody.querySelector('#question-text');
+                    if (!qTextDiv) {
+                        qTextDiv = htmlBody.querySelector('.text-area');
+                    }
+                    
+                    let choicesArea = htmlBody.querySelector('#choices-area');
                     if (!choicesArea) {
-                        choicesArea = svgDoc.querySelector('.choices-area');
+                        choicesArea = htmlBody.querySelector('.choices-area');
                     }
                     
-                    console.log('Found elements:', { qTextDiv, choicesArea });
+                    console.log('Found elements:', { qTextDiv, choicesArea, foreignObject, htmlBody });
                     
                     if (qTextDiv) {
                         qTextDiv.textContent = q.question;
                         console.log('Updated question text to:', q.question);
+                    } else {
+                        console.log('Could not find question text element');
                     }
                     
                     if (choicesArea) {
                         choicesArea.innerHTML = '';
+                        console.log('Choices area found, clearing content');
                         
                         // Handle shuffled choices
                         let choicesWithOriginal;
@@ -271,16 +307,39 @@
                             shuffledChoicesCache[q.id] = choicesWithOriginal;
                         }
                         
+                        console.log('Creating choice buttons:', choicesWithOriginal);
+                        
                         choicesWithOriginal.forEach((obj, renderedIndex) => {
-                            const btn = document.createElement('div');
-                            btn.className = 'choice-btn';
-                            btn.textContent = obj.text;
-                            btn.dataset.originalIndex = obj.originalIndex;
-                            btn.onclick = () => selectChoiceInSVG(renderedIndex);
-                            choicesArea.appendChild(btn);
+                            // Create using innerHTML to ensure proper element creation
+                            const btnHtml = `<div class="choice-btn" data-original-index="${obj.originalIndex}">${obj.text}</div>`;
+                            choicesArea.insertAdjacentHTML('beforeend', btnHtml);
                         });
                         
-                        console.log('Added', choicesWithOriginal.length, 'choice buttons');
+                        // Add click handlers after elements are created
+                        const createdBtns = choicesArea.querySelectorAll('.choice-btn');
+                        createdBtns.forEach((btn, renderedIndex) => {
+                            btn.onclick = () => selectChoiceInSVG(renderedIndex);
+                            console.log('Added click handler to button:', btn.textContent);
+                        });
+                        
+                        // Setup submit button
+                        const submitBtn = htmlBody.querySelector('#submit-btn');
+                        if (submitBtn) {
+                            submitBtn.style.display = 'none'; // Initially hidden
+                            submitBtn.disabled = true;
+                            submitBtn.onclick = () => {
+                                const selectedBtn = htmlBody.querySelector('.choice-btn.selected');
+                                if (selectedBtn) {
+                                    const renderedIndex = Array.from(createdBtns).indexOf(selectedBtn);
+                                    evaluateAnswer(renderedIndex);
+                                }
+                            };
+                        }
+                        
+                        console.log('Added', choicesWithOriginal.length, 'choice buttons to DOM');
+                        console.log('Choices area HTML:', choicesArea.innerHTML);
+                    } else {
+                        console.log('Could not find choices area');
                     }
                     return true;
                 } catch (e) {
@@ -299,7 +358,7 @@
                 console.log('SVG not ready, waiting for load event...');
                 qSvgObj.addEventListener('load', () => {
                     console.log('SVG loaded, trying update again...');
-                    setTimeout(() => tryUpdateSVG(), 100); // small delay to ensure content is ready
+                    setTimeout(() => tryUpdateSVG(), 300); // longer delay to ensure foreignObject content is ready
                 }, { once: true });
             }
         }
@@ -307,22 +366,95 @@
         // Update answer in SVG
         function updateAnswerInSVG(q, chosenOriginalIndex) {
             const aSvgObj = document.getElementById('aSvg');
-            if (aSvgObj && aSvgObj.contentDocument) {
+            console.log('Updating answer SVG with:', { question: q.question, chosenIndex: chosenOriginalIndex });
+            
+            function tryUpdateAnswerSVG() {
                 try {
                     const svgDoc = aSvgObj.contentDocument;
-                    const answerCard = svgDoc.getElementById('answer-card');
-                    
-                    if (answerCard) {
-                        const correct = q.correctIndex === chosenOriginalIndex;
-                        answerCard.innerHTML = `
-                            <strong>${correct ? 'Σωστό!' : 'Λάθος.'}</strong><br>
-                            Η επιλογή σου: ${q.choices[chosenOriginalIndex]}<br>
-                            <div style="margin-top: 6px;">${q.explanation || ''}</div>
-                        `;
+                    if (!svgDoc) {
+                        console.log('Answer SVG document not available yet');
+                        return false;
                     }
+                    
+                    // Look for foreignObject and then HTML elements inside it
+                    const foreignObject = svgDoc.querySelector('foreignObject');
+                    if (!foreignObject) {
+                        console.log('No foreignObject found in answer SVG');
+                        return false;
+                    }
+                    
+                    const htmlBody = foreignObject.querySelector('body');
+                    if (!htmlBody) {
+                        console.log('No body element found in answer SVG foreignObject');
+                        return false;
+                    }
+                    
+                    // Find answer elements
+                    const resultStatus = htmlBody.querySelector('#result-status');
+                    const userChoice = htmlBody.querySelector('#user-choice');
+                    const correctAnswer = htmlBody.querySelector('#correct-answer');
+                    const explanation = htmlBody.querySelector('#explanation');
+                    
+                    console.log('Found answer elements:', { resultStatus, userChoice, correctAnswer, explanation });
+                    
+                    const correct = q.correctIndex === chosenOriginalIndex;
+                    
+                    if (resultStatus) {
+                        resultStatus.textContent = correct ? 'Σωστό! 🎉' : 'Λάθος 😞';
+                        resultStatus.className = `result-status ${correct ? 'correct' : 'wrong'}`;
+                    }
+                    
+                    if (userChoice) {
+                        userChoice.innerHTML = `<strong>Η επιλογή σου:</strong> ${q.choices[chosenOriginalIndex]}`;
+                    }
+                    
+                    if (correctAnswer && !correct) {
+                        correctAnswer.innerHTML = `<strong>Σωστή απάντηση:</strong> ${q.choices[q.correctIndex]}`;
+                        correctAnswer.style.display = 'block';
+                    } else if (correctAnswer) {
+                        correctAnswer.style.display = 'none';
+                    }
+                    
+                    if (explanation && q.explanation) {
+                        explanation.textContent = q.explanation;
+                        explanation.style.display = 'block';
+                    } else if (explanation) {
+                        explanation.style.display = 'none';
+                    }
+                    
+                    // Setup next button
+                    const nextBtn = htmlBody.querySelector('#next-btn');
+                    if (nextBtn) {
+                        nextBtn.onclick = () => {
+                            currentQuestionIndex++;
+                            if (currentQuestionIndex >= questions.length) {
+                                showSessionSummary(true);
+                            } else {
+                                displayQuestion(currentQuestionIndex);
+                            }
+                        };
+                    }
+                    
+                    console.log('Updated answer card successfully');
+                    return true;
                 } catch (e) {
-                    console.warn('Could not access answer SVG content:', e);
+                    console.error('Error updating answer SVG:', e);
+                    return false;
                 }
+            }
+            
+            // Try immediately if SVG is loaded
+            if (aSvgObj) {
+                if (tryUpdateAnswerSVG()) {
+                    return;
+                }
+                
+                // Otherwise wait for load event
+                console.log('Answer SVG not ready, waiting for load event...');
+                aSvgObj.addEventListener('load', () => {
+                    console.log('Answer SVG loaded, trying update again...');
+                    setTimeout(() => tryUpdateAnswerSVG(), 300);
+                }, { once: true });
             }
         }
 
@@ -330,8 +462,37 @@
             const q = questions[currentQuestionIndex];
             if (!q) return;
             
-            // Immediately evaluate answer when choice is clicked
-            evaluateAnswer(renderedIndex);
+            // Mark choice as selected and show submit button
+            const qSvgObj = document.getElementById('qSvg');
+            if (qSvgObj && qSvgObj.contentDocument) {
+                try {
+                    const svgDoc = qSvgObj.contentDocument;
+                    const foreignObject = svgDoc.querySelector('foreignObject');
+                    if (foreignObject) {
+                        const htmlBody = foreignObject.querySelector('body');
+                        if (htmlBody) {
+                            // Remove previous selection
+                            const allBtns = htmlBody.querySelectorAll('.choice-btn');
+                            allBtns.forEach(btn => btn.classList.remove('selected'));
+                            
+                            // Mark current selection
+                            const selectedBtn = allBtns[renderedIndex];
+                            if (selectedBtn) {
+                                selectedBtn.classList.add('selected');
+                            }
+                            
+                            // Show and enable submit button
+                            const submitBtn = htmlBody.querySelector('#submit-btn');
+                            if (submitBtn) {
+                                submitBtn.style.display = 'block';
+                                submitBtn.disabled = false;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error selecting choice:', e);
+                }
+            }
         }
 
 
@@ -351,20 +512,26 @@
             if (qSvgObj && qSvgObj.contentDocument) {
                 try {
                     const svgDoc = qSvgObj.contentDocument;
-                    const choiceBtns = svgDoc.querySelectorAll('.choices-area .choice-btn');
-                    choiceBtns.forEach((btn, i) => {
-                        const orig = parseInt(btn.dataset.originalIndex, 10);
-                        btn.onclick = null; // disable further clicks
-                        btn.style.cursor = 'default';
-                        if (orig === q.correctIndex) {
-                            btn.style.backgroundColor = '#4ade80'; // green for correct
-                            btn.style.borderColor = '#16a34a';
+                    const foreignObject = svgDoc.querySelector('foreignObject');
+                    if (foreignObject) {
+                        const htmlBody = foreignObject.querySelector('body');
+                        if (htmlBody) {
+                            const choiceBtns = htmlBody.querySelectorAll('.choices-area .choice-btn');
+                            choiceBtns.forEach((btn, i) => {
+                                const orig = parseInt(btn.getAttribute('data-original-index'), 10);
+                                btn.onclick = null; // disable further clicks
+                                btn.style.cursor = 'default';
+                                if (orig === q.correctIndex) {
+                                    btn.style.backgroundColor = '#4ade80'; // green for correct
+                                    btn.style.borderColor = '#16a34a';
+                                }
+                                if (i === renderedIndex && orig !== q.correctIndex) {
+                                    btn.style.backgroundColor = '#f87171'; // red for wrong
+                                    btn.style.borderColor = '#dc2626';
+                                }
+                            });
                         }
-                        if (i === renderedIndex && orig !== q.correctIndex) {
-                            btn.style.backgroundColor = '#f87171'; // red for wrong
-                            btn.style.borderColor = '#dc2626';
-                        }
-                    });
+                    }
                 } catch (e) {
                     console.warn('Could not update choice colors:', e);
                 }
@@ -380,16 +547,6 @@
             }, 1000); // delay to show the color feedback
             
             updateScore(false, correct); // animate only if correct
-            
-            // Auto-advance to next question after showing answer
-            setTimeout(() => {
-                currentQuestionIndex++;
-                if (currentQuestionIndex >= questions.length) {
-                    showSessionSummary(true);
-                } else {
-                    displayQuestion(currentQuestionIndex);
-                }
-            }, 3000); // show answer for 3 seconds
         }
 
         function renderAnswerReview(q, chosenOriginalIndex, container) {

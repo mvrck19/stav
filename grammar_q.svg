@@ -436,17 +436,43 @@
                 .choice-btn.selected { 
                     animation: pulseSel 1.2s ease-in-out infinite; 
                 }
+                .submit-btn {
+                    position: absolute;
+                    bottom: 3%;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: linear-gradient(135deg, #235789, #1d466b);
+                    color: white;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 12px 24px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 180ms ease;
+                    box-shadow: 0 4px 12px rgba(35,87,137,0.3);
+                    z-index: 25;
+                    min-width: 120px;
+                    display: none;
+                }
+                .submit-btn:hover {
+                    background: linear-gradient(135deg, #1d466b, #164058);
+                    transform: translateX(-50%) translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(35,87,137,0.4);
+                }
+                .submit-btn:disabled {
+                    background: #ccc;
+                    cursor: not-allowed;
+                    opacity: 0.6;
+                }
             </style>
-            <div class="main-title">ΕΡΩΤΗΣΗ</div>
             <div class="question-text">
-                <div id="question-text" class="text-area">Ποια είναι η σωστή πτώση για το άρθρο 'τον' πριν από αρσενικό ουσιαστικό σε αιτιατική;</div>
+                <div id="question-text" class="text-area"></div>
             </div>
             <div id="choices-area" class="choices-area">
-                <div class="choice-btn">Κλητική</div>
-                <div class="choice-btn">Αιτιατική</div>
-                <div class="choice-btn">Ονομαστική</div>
-                <div class="choice-btn">Γενική</div>
+                <!-- Choices will be dynamically loaded from JSON -->
             </div>
+            <button id="submit-btn" class="submit-btn">Υποβολή</button>
         </body>
     </foreignObject>
 </svg>
