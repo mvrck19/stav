@@ -24,48 +24,53 @@ body {
   font-size: 1.25rem; /* Example: changed from 20px to 1.25rem */
 }
 
+/* Quiz header layout */
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 16px 16px 0 0;
+  margin-bottom: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
 .global-score {
-  position: fixed;
-  top: 14px;
-  right: 16px;
   background: linear-gradient(135deg,#235789,#1d466b);
   color: #fff;
-  padding: 10px 18px;
-  border-radius: 14px;
-  font-size: 0.9rem;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: .5px;
-  box-shadow: 0 4px 16px -4px rgba(0,0,0,0.25);
-  z-index: 999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .global-score::before {
   content: "★";
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
 }
 
 .back-btn {
-  position: fixed;
-  top: 14px;
-  left: 16px;
   background: linear-gradient(135deg,#235789,#1d466b);
   color: #fff;
   border: none;
-  padding: 10px 18px;
-  border-radius: 14px;
-  font-size: 0.9rem;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   letter-spacing: .5px;
-  box-shadow: 0 4px 16px -4px rgba(0,0,0,0.25);
-  z-index: 999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   transition: background 160ms ease, transform 120ms ease;
 }
 
@@ -180,6 +185,10 @@ body {
   transform-style: preserve-3d;
   height: 640px;
   position: relative;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.15);
+  overflow: hidden;
 }
 
 /* 3D card wrapper to handle flip animation */
@@ -187,7 +196,8 @@ body {
   perspective: 1200px;
   position: relative; /* ensure inner faces are positioned relative to this container */
   width: 100%;
-  min-height: 640px; /* match faces so container doesn't collapse */
+  min-height: calc(640px - 70px); /* subtract header height */
+  margin-top: 0;
 }
 .card-3d > .card-inner {
   transform-style: preserve-3d;
@@ -504,32 +514,29 @@ body {
 
 /* Mobile Optimizations */
 @media (max-width: 768px) {
+  .quiz-header {
+    padding: 8px 12px;
+    border-radius: 12px 12px 0 0;
+  }
+  
   .global-score, .back-btn {
-    font-size: 0.8rem;
-    padding: 8px 14px;
-    top: 8px;
-  }
-  
-  .global-score {
-    right: 8px;
-  }
-  
-  .back-btn {
-    left: 8px;
+    font-size: 0.75rem;
+    padding: 6px 10px;
   }
   
   .container {
-    padding: 0 8px;
+    padding: 8px;
     min-height: 100vh;
   }
   
   #cards-container {
     height: calc(100vh - 16px);
     max-height: 100vh;
+    border-radius: 12px;
   }
   
   .card-3d {
-    min-height: calc(100vh - 16px);
+    min-height: calc(100vh - 70px);
   }
   
   .card-background {
@@ -648,31 +655,23 @@ body {
 
 /* Progress container styling */
 .progress-container {
-  position: absolute;
-  top: 10px;
-  right: 14px;
-  z-index: 50;
+  display: flex;
+  align-items: center;
 }
 
 .progress-text {
   font-size: 0.8rem;
   color: #235789;
-  background: rgba(255,255,255,0.9);
+  background: rgba(35,87,137,0.1);
   padding: 6px 10px;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
   font-weight: 600;
   letter-spacing: .5px;
 }
 
 @media (max-width: 768px) {
-  .progress-container {
-    top: 8px;
-    right: 8px;
-  }
-  
   .progress-text {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     padding: 4px 8px;
   }
 }
