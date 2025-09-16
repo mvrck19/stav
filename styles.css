@@ -183,12 +183,14 @@ body {
   width: 100%;
   perspective: 1000px;
   transform-style: preserve-3d;
-  height: 640px;
   position: relative;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
   box-shadow: 0 10px 40px -10px rgba(0,0,0,0.15);
-  overflow: hidden;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  min-height: 640px;
 }
 
 /* 3D card wrapper to handle flip animation */
@@ -196,8 +198,54 @@ body {
   perspective: 1200px;
   position: relative; /* ensure inner faces are positioned relative to this container */
   width: 100%;
-  min-height: calc(640px - 70px); /* subtract header height */
+  flex: 1;
+  min-height: calc(640px - 120px); /* subtract header and button area height */
   margin-top: 0;
+}
+
+/* External action buttons */
+.external-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+  min-height: 60px;
+}
+
+.external-btn {
+  background: linear-gradient(135deg, #235789, #1d466b);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(35,87,137,0.3);
+  transition: all 180ms ease;
+  min-height: 48px;
+  min-width: 180px;
+}
+
+.external-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(35,87,137,0.4);
+  filter: brightness(1.05);
+}
+
+.external-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.external-btn:disabled {
+  background: #9fb3c2;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 .card-3d > .card-inner {
   transform-style: preserve-3d;
@@ -390,10 +438,9 @@ body {
 .prev-btn:hover:not(:disabled), .confirm-btn:hover:not(:disabled) { background:#264660; }
 .prev-btn:disabled, .confirm-btn:disabled { background:#9fb3c2; cursor: not-allowed; }
 
+/* Legacy choice-actions - no longer used with external buttons */
 .choice-actions { 
-  position:absolute; left:50%; bottom:2%; transform:translateX(-50%);
-  width:82%; max-width:380px; display:flex; justify-content:center; 
-  gap:10px; z-index:25; 
+  display: none;
 }
 
 /* Choice selection styles moved to SVG foreignObject */
@@ -530,13 +577,25 @@ body {
   }
   
   #cards-container {
-    height: calc(100vh - 16px);
+    min-height: calc(100vh - 16px);
     max-height: 100vh;
     border-radius: 12px;
   }
   
   .card-3d {
-    min-height: calc(100vh - 70px);
+    min-height: calc(100vh - 140px);
+  }
+  
+  .external-actions {
+    padding: 12px;
+    min-height: 56px;
+  }
+  
+  .external-btn {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    min-height: 44px;
+    min-width: 160px;
   }
   
   .card-background {
@@ -548,9 +607,9 @@ body {
   
   /* Choice styles moved to SVG foreignObject */
   
+  /* Legacy choice-actions - no longer used */
   .choice-actions {
-    bottom: 1%;
-    width: 88%;
+    display: none;
   }
   
   .confirm-btn {

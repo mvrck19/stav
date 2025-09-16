@@ -64,6 +64,12 @@
             </div> <!-- .card-inner -->
             </div>
             </div> <!-- .card-3d -->
+            
+            <!-- External action buttons -->
+            <div class="external-actions">
+                <button id="externalSubmitBtn" class="external-btn submit-btn" style="display:none;" disabled>Υποβολή Απάντησης</button>
+                <button id="externalNextBtn" class="external-btn next-btn" style="display:none;">Επόμενη Ερώτηση</button>
+            </div>
         </div>
     </div>
     <script>
@@ -256,35 +262,29 @@
                 document.querySelector('.question-section').classList.remove('active');
                 document.querySelector('.answer-section').classList.add('active');
                 updateAnswerInSVG(q, answered.chosenIndex);
+                
+                // Hide submit button, show next button
+                const externalSubmitBtn = document.getElementById('externalSubmitBtn');
+                const externalNextBtn = document.getElementById('externalNextBtn');
+                if (externalSubmitBtn) externalSubmitBtn.style.display = 'none';
+                if (externalNextBtn) externalNextBtn.style.display = 'block';
             } else {
-                // ensure we are on question side and reset submit button
+                // ensure we are on question side and reset buttons
                 const card3d = document.getElementById('card3d');
                 card3d.classList.remove('flipped');
                 document.querySelector('.question-section').classList.add('active');
                 document.querySelector('.answer-section').classList.remove('active');
                 
-                // Hide submit button for new questions
-                setTimeout(() => {
-                    const qSvgObj = document.getElementById('qSvg');
-                    if (qSvgObj && qSvgObj.contentDocument) {
-                        try {
-                            const svgDoc = qSvgObj.contentDocument;
-                            const foreignObject = svgDoc.querySelector('foreignObject');
-                            if (foreignObject) {
-                                const htmlBody = foreignObject.querySelector('body');
-                                if (htmlBody) {
-                                    const submitBtn = htmlBody.querySelector('#submit-btn');
-                                    if (submitBtn) {
-                                        submitBtn.style.display = 'none';
-                                        submitBtn.disabled = true;
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            console.warn('Could not reset submit button:', e);
-                        }
-                    }
-                }, 100);
+                // Reset external buttons for new questions
+                const externalSubmitBtn = document.getElementById('externalSubmitBtn');
+                const externalNextBtn = document.getElementById('externalNextBtn');
+                if (externalSubmitBtn) {
+                    externalSubmitBtn.style.display = 'none';
+                    externalSubmitBtn.disabled = true;
+                }
+                if (externalNextBtn) {
+                    externalNextBtn.style.display = 'none';
+                }
             }
 
             updateProgress();
@@ -368,12 +368,18 @@
                             console.log('Added click handler to button:', btn.textContent);
                         });
                         
-                        // Setup submit button
+                        // Hide SVG submit button (we'll use external one)
                         const submitBtn = htmlBody.querySelector('#submit-btn');
                         if (submitBtn) {
-                            submitBtn.style.display = 'none'; // Initially hidden
-                            submitBtn.disabled = true;
-                            submitBtn.onclick = () => {
+                            submitBtn.style.display = 'none';
+                        }
+                        
+                        // Setup external submit button
+                        const externalSubmitBtn = document.getElementById('externalSubmitBtn');
+                        if (externalSubmitBtn) {
+                            externalSubmitBtn.style.display = 'none';
+                            externalSubmitBtn.disabled = true;
+                            externalSubmitBtn.onclick = () => {
                                 const selectedBtn = htmlBody.querySelector('.choice-btn.selected');
                                 if (selectedBtn) {
                                     const renderedIndex = Array.from(createdBtns).indexOf(selectedBtn);
@@ -484,10 +490,17 @@
                         explanation.style.display = 'none';
                     }
                     
-                    // Setup next button
+                    // Hide SVG next button (we'll use external one)
                     const nextBtn = htmlBody.querySelector('#next-btn');
                     if (nextBtn) {
-                        nextBtn.onclick = () => {
+                        nextBtn.style.display = 'none';
+                    }
+                    
+                    // Setup external next button
+                    const externalNextBtn = document.getElementById('externalNextBtn');
+                    if (externalNextBtn) {
+                        externalNextBtn.style.display = 'block';
+                        externalNextBtn.onclick = () => {
                             currentQuestionIndex++;
                             if (currentQuestionIndex >= questions.length) {
                                 showSessionSummary(true);
@@ -543,11 +556,11 @@
                                 selectedBtn.classList.add('selected');
                             }
                             
-                            // Show and enable submit button
-                            const submitBtn = htmlBody.querySelector('#submit-btn');
-                            if (submitBtn) {
-                                submitBtn.style.display = 'block';
-                                submitBtn.disabled = false;
+                            // Show and enable external submit button
+                            const externalSubmitBtn = document.getElementById('externalSubmitBtn');
+                            if (externalSubmitBtn) {
+                                externalSubmitBtn.style.display = 'block';
+                                externalSubmitBtn.disabled = false;
                             }
                         }
                     }
@@ -575,6 +588,12 @@
             document.querySelector('.question-section').classList.remove('active');
             document.querySelector('.answer-section').classList.add('active');
             updateAnswerInSVG(q, chosenOriginalIndex);
+            
+            // Switch from submit button to next button
+            const externalSubmitBtn = document.getElementById('externalSubmitBtn');
+            const externalNextBtn = document.getElementById('externalNextBtn');
+            if (externalSubmitBtn) externalSubmitBtn.style.display = 'none';
+            if (externalNextBtn) externalNextBtn.style.display = 'block';
             
             updateScore(false, correct); // animate only if correct
         }
