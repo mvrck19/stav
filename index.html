@@ -168,7 +168,27 @@
             // swap SVG assets depending on category
             const qSvg = document.getElementById('qSvg');
             const aSvg = document.getElementById('aSvg');
+            
             if (qSvg && aSvg) {
+                let svgsLoaded = 0;
+                const totalSvgs = 2;
+                
+                function onSvgLoad() {
+                    svgsLoaded++;
+                    if (svgsLoaded === totalSvgs) {
+                        // Both SVGs loaded, now display the question
+                        displayQuestion(0);
+                        document.querySelector('.question-section').classList.add('active');
+                        updateProgress();
+                        updateScore(true);
+                        updatePrevButton();
+                    }
+                }
+                
+                // Add load event listeners before changing data attribute
+                qSvg.addEventListener('load', onSvgLoad, { once: true });
+                aSvg.addEventListener('load', onSvgLoad, { once: true });
+                
                 if (cat.id === 'grammar') {
                     qSvg.setAttribute('data', 'grammar_q.svg');
                     aSvg.setAttribute('data', 'grammar_a.svg');
@@ -176,12 +196,20 @@
                     qSvg.setAttribute('data', 'syntax_q.svg');
                     aSvg.setAttribute('data', 'syntax_a.svg');
                 }
+                
+                // If SVGs are already loaded (cached), trigger immediately
+                setTimeout(() => {
+                    if (qSvg.contentDocument && aSvg.contentDocument && svgsLoaded < totalSvgs) {
+                        console.log('SVGs already loaded, triggering display immediately');
+                        svgsLoaded = totalSvgs;
+                        displayQuestion(0);
+                        document.querySelector('.question-section').classList.add('active');
+                        updateProgress();
+                        updateScore(true);
+                        updatePrevButton();
+                    }
+                }, 100);
             }
-            displayQuestion(0);
-            document.querySelector('.question-section').classList.add('active');
-            updateProgress();
-            updateScore(true);
-            updatePrevButton();
         }
 
         function updateProgress() {
@@ -354,12 +382,31 @@
                     return;
                 }
                 
-                // Otherwise wait for load event
+                // Otherwise wait for load event with multiple retry attempts
                 console.log('SVG not ready, waiting for load event...');
+                let retryCount = 0;
+                const maxRetries = 5;
+                
+                function retryUpdate() {
+                    retryCount++;
+                    console.log(`Retry attempt ${retryCount}/${maxRetries}`);
+                    if (tryUpdateSVG()) {
+                        return;
+                    }
+                    if (retryCount < maxRetries) {
+                        setTimeout(retryUpdate, 200 * retryCount); // Increasing delay
+                    } else {
+                        console.error('Failed to update SVG after multiple retries');
+                    }
+                }
+                
                 qSvgObj.addEventListener('load', () => {
                     console.log('SVG loaded, trying update again...');
-                    setTimeout(() => tryUpdateSVG(), 300); // longer delay to ensure foreignObject content is ready
+                    setTimeout(retryUpdate, 300);
                 }, { once: true });
+                
+                // Also try periodic retries in case load event was missed
+                setTimeout(retryUpdate, 500);
             }
         }
 
@@ -507,44 +554,12 @@
             if (correct) score += 10; // add 10 points for correct answer
             persistState();
             
-            // Update SVG choices to show correct/wrong
-            const qSvgObj = document.getElementById('qSvg');
-            if (qSvgObj && qSvgObj.contentDocument) {
-                try {
-                    const svgDoc = qSvgObj.contentDocument;
-                    const foreignObject = svgDoc.querySelector('foreignObject');
-                    if (foreignObject) {
-                        const htmlBody = foreignObject.querySelector('body');
-                        if (htmlBody) {
-                            const choiceBtns = htmlBody.querySelectorAll('.choices-area .choice-btn');
-                            choiceBtns.forEach((btn, i) => {
-                                const orig = parseInt(btn.getAttribute('data-original-index'), 10);
-                                btn.onclick = null; // disable further clicks
-                                btn.style.cursor = 'default';
-                                if (orig === q.correctIndex) {
-                                    btn.style.backgroundColor = '#4ade80'; // green for correct
-                                    btn.style.borderColor = '#16a34a';
-                                }
-                                if (i === renderedIndex && orig !== q.correctIndex) {
-                                    btn.style.backgroundColor = '#f87171'; // red for wrong
-                                    btn.style.borderColor = '#dc2626';
-                                }
-                            });
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Could not update choice colors:', e);
-                }
-            }
-            
-            // flip to answer side
-            setTimeout(() => {
-                const card3d = document.getElementById('card3d');
-                card3d.classList.add('flipped');
-                document.querySelector('.question-section').classList.remove('active');
-                document.querySelector('.answer-section').classList.add('active');
-                updateAnswerInSVG(q, chosenOriginalIndex);
-            }, 1000); // delay to show the color feedback
+            // flip to answer side immediately
+            const card3d = document.getElementById('card3d');
+            card3d.classList.add('flipped');
+            document.querySelector('.question-section').classList.remove('active');
+            document.querySelector('.answer-section').classList.add('active');
+            updateAnswerInSVG(q, chosenOriginalIndex);
             
             updateScore(false, correct); // animate only if correct
         }
@@ -650,6 +665,15 @@
             if (globalScore) globalScore.style.display = 'none';
             const backBtn = document.getElementById('backToCategories');
             if (backBtn) backBtn.style.display = 'none';
+            
+            // Reset card flip state
+            const card3d = document.getElementById('card3d');
+            if (card3d) {
+                card3d.classList.remove('flipped');
+            }
+            document.querySelector('.question-section')?.classList.add('active');
+            document.querySelector('.answer-section')?.classList.remove('active');
+            
             // Reset state
             answeredMap = {};
             score = 0;
@@ -658,6 +682,26 @@
             shuffledChoicesCache = {};
             currentCategory = null;
             currentQuestionIndex = 0;
+            
+            // Clear any SVG content to ensure fresh loading next time
+            const qSvg = document.getElementById('qSvg');
+            const aSvg = document.getElementById('aSvg');
+            if (qSvg) {
+                // Force SVG to reload by briefly clearing and resetting data attribute
+                const currentData = qSvg.getAttribute('data');
+                qSvg.setAttribute('data', '');
+                setTimeout(() => {
+                    if (currentData) qSvg.setAttribute('data', currentData);
+                }, 50);
+            }
+            if (aSvg) {
+                const currentData = aSvg.getAttribute('data');
+                aSvg.setAttribute('data', '');
+                setTimeout(() => {
+                    if (currentData) aSvg.setAttribute('data', currentData);
+                }, 50);
+            }
+            
             // Re-render categories to show updated high scores
             renderCategories();
         }

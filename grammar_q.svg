@@ -467,7 +467,7 @@
                 }
             </style>
             <div class="question-text">
-                <div id="question-text" class="text-area"></div>
+                <div id="question-text" class="text-area">Φόρτωση ερωτήσεων...</div>
             </div>
             <div id="choices-area" class="choices-area">
                 <!-- Choices will be dynamically loaded from JSON -->
