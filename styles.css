@@ -21,7 +21,7 @@ body {
   align-items: center;
   padding: 0;
   overflow-x: hidden;
-  font-size: 1.25rem; /* Example: changed from 20px to 1.25rem */
+  font-size: 1.25rem;
 }
 
 /* Quiz header layout */
@@ -29,48 +29,48 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.875rem 1rem; /* Changed from 14px 16px to rem */
+  padding: 0.875rem 1rem;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  border-radius: 1rem 1rem 0 0; /* Changed from 16px to rem */
+  backdrop-filter: blur(0.5rem);
+  border-radius: 1rem 1rem 0 0;
   margin-bottom: 0;
-  box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.08); /* Changed from 0 2px 8px to rem */
+  box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.08);
 }
 
 .global-score {
   background: linear-gradient(135deg,#235789,#1d466b);
   color: #fff;
-  padding: 0.5rem 0.875rem; /* Changed from 8px 14px to rem */
-  border-radius: 0.75rem; /* Changed from 12px to rem */
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.75rem;
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.03125rem;
-  box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.15); /* Changed from 0 2px 8px to rem */
+  box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
-  gap: 0.375rem; /* Changed from 6px to rem */
+  gap: 0.375rem;
 }
 
 .global-score::before {
   content: "★";
   font-size: 0.9rem;
-  filter: drop-shadow(0 0.0625rem 0.125rem rgba(0,0,0,0.25)); /* Changed from 0 1px 2px to rem */
+  filter: drop-shadow(0 0.0625rem 0.125rem rgba(0,0,0,0.25));
 }
 
 .back-btn {
   background: linear-gradient(135deg,#235789,#1d466b);
   color: #fff;
   border: none;
-  padding: 0.5rem 0.875rem; /* Changed from 8px 14px to rem */
-  border-radius: 0.75rem; /* Changed from 12px to rem */
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.75rem;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   letter-spacing: 0.03125rem;
-  box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.15); /* Changed from 0 2px 8px to rem */
+  box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
-  gap: 0.375rem; /* Changed from 6px to rem */
+  gap: 0.375rem;
   transition: background 160ms ease, transform 120ms ease;
 }
 
@@ -223,6 +223,35 @@ body {
   justify-content: center;
 }
 
+/* Base button styles */
+.btn-primary {
+  background: linear-gradient(135deg, #235789, #1d466b);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 180ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-0.125rem);
+  filter: brightness(1.05);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  background: #9fb3c2;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* External action buttons */
 .external-actions {
   display: flex;
@@ -235,35 +264,19 @@ body {
 }
 
 .external-btn {
-  background: linear-gradient(135deg, #235789, #1d466b);
-  color: white;
-  border: none;
-  border-radius: 0.75rem;
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
   letter-spacing: 0.03125rem;
   box-shadow: 0 0.25rem 0.75rem rgba(35,87,137,0.3);
-  transition: all 180ms ease;
   min-height: 3rem;
   min-width: 11.25rem;
 }
 
 .external-btn:hover:not(:disabled) {
-  transform: translateY(-0.125rem);
   box-shadow: 0 0.375rem 1.125rem rgba(35,87,137,0.4);
-  filter: brightness(1.05);
-}
-
-.external-btn:active:not(:disabled) {
-  transform: translateY(0);
 }
 
 .external-btn:disabled {
-  background: #9fb3c2;
-  cursor: not-allowed;
-  transform: none;
   box-shadow: 0 0.125rem 0.375rem rgba(0,0,0,0.1);
 }
 .card-3d > .card-inner {
@@ -320,14 +333,6 @@ body {
   z-index: 0; /* keep svg behind overlays */
 }
 
-/* Legacy card-text - now handled by SVG foreignObject */
-.card-text {
-  display: none;
-}
-
-.card-text .section-title {
-  display: none;
-}
 
 .answer-content {
   position: absolute;
@@ -359,17 +364,13 @@ body {
 .question-text .text-area { color: #0b3b5a; }
 .answer-text .text-area { color: #0b3b5a; }
 
-
 .vase-image {
   width: 7.5rem;
   margin: 1rem auto;
   display: block;
 }
 
-/* Legacy input-area - now handled by SVG foreignObject */
-.input-area {
-  display: none;
-}
+
 
 /* Ensure input area stays inside card on narrow/tall cards */
 .question-section .input-area {
@@ -514,51 +515,18 @@ foreignObject body {
   display: none !important;
 }
 
-/* Choice styles moved to SVG foreignObject to avoid conflicts */
-
-.input-label {
-  color: var(--text-gray);
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  display: block;
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 0.3125rem;
-  border-radius: 0.3125rem;
-}
-
-.input-box {
-  width: 100%;
-  height: 2.5rem;
-  border: 0.125rem solid var(--primary-color);
-  border-radius: 0.3125rem;
-  padding: 0 1rem;
-  font-size: 1rem;
-  margin-bottom: 1rem;
-  background-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.1);
-}
 
 .submit-btn,
 .next-btn {
-  background: linear-gradient(135deg, #235789, #1d466b);
-  color: white;
-  border: none;
-  border-radius: 0.75rem;
   padding: 0.75rem 1.5rem;
   font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
   min-height: 2.75rem;
   min-width: 7.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   letter-spacing: 0.03125rem;
   box-shadow: 0 0.25rem 0.75rem rgba(35,87,137,0.3);
-  transition: all 180ms ease;
 }
 
-.prev-btn, .confirm-btn {
+.prev-btn {
   background-color: #355c7d;
   color: #fff;
   border: none;
@@ -571,13 +539,10 @@ foreignObject body {
   transition: background 160ms ease, transform 120ms ease;
 }
 
-.prev-btn:hover:not(:disabled), .confirm-btn:hover:not(:disabled) { background:#264660; }
-.prev-btn:disabled, .confirm-btn:disabled { background:#9fb3c2; cursor: not-allowed; }
+.prev-btn:hover:not(:disabled) { background:#264660; }
+.prev-btn:disabled { background:#9fb3c2; cursor: not-allowed; }
 
-/* Legacy choice-actions - no longer used with external buttons */
-.choice-actions { 
-  display: none;
-}
+
 
 /* Choice selection styles moved to SVG foreignObject */
 
@@ -592,7 +557,7 @@ foreignObject body {
   width: 100%;
   height: 100%;
   background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(0.25rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -742,22 +707,6 @@ foreignObject body {
     object-fit: contain;
   }
   
-  /* Choice styles moved to SVG foreignObject */
-  
-  /* Legacy choice-actions - no longer used */
-  .choice-actions {
-    display: none;
-  }
-  
-  .confirm-btn {
-    padding: 0.75rem 1.25rem;
-    font-size: 0.9rem;
-    min-height: 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
   .answer-content {
     bottom: 4%;
     width: 88%;
@@ -773,8 +722,6 @@ foreignObject body {
     align-items: center;
     justify-content: center;
   }
-  
-  /* Legacy styles removed - now handled by SVG foreignObject */
   
   /* Progress indicator mobile adjustment */
   #progressBarText {
@@ -907,16 +854,4 @@ foreignObject body {
   }
 }
 
-.submit-btn:hover,
-.next-btn:hover {
-  background: linear-gradient(135deg, #1d466b, #164058);
-  transform: translateY(-0.125rem);
-  box-shadow: 0 0.375rem 1rem rgba(35,87,137,0.4);
-}
 
-.submit-btn:disabled {
-  background: #9fb3c2;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: 0 0.125rem 0.375rem rgba(0,0,0,0.1);
-}
