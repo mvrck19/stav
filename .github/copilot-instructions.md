@@ -16,6 +16,14 @@ This project is a browser-based Greek language quiz app focused on grammar and s
 - **No Frameworks**: All logic is vanilla JS in `<script>` tags in `index.html`. No external dependencies.
 - **Mobile Support**: CSS includes responsive rules for mobile. Test UI changes on small screens.
 - **No State Persistence**: Quiz state resets on reload; only high scores persist.
+- **Responsive Layout**: Use CSS Flexbox (or CSS Grid if more appropriate) to create a fully fluid, content-driven layout. Do not use fixed pixel values; use relative units such as %, rem, em, vw/vh, and fr. Avoid media queries and device-specific breakpoints; let components wrap and reflow naturally. Prefer gap for spacing; use flex-grow/shrink/basis or grid minmax() for sizing; add sensible min/max constraints for readability. Avoid absolute positioning unless necessary.
+
+## Responsive Layout Guidelines
+
+- Use Flexbox for layout management to ensure elements stack properly on different screen sizes.
+- Utilize CSS variables for spacing and colors to maintain consistency across the application.
+- Ensure that all interactive elements, such as buttons, are easily accessible and have sufficient touch targets for mobile users.
+- Test the layout on various devices to confirm responsiveness and usability.
 
 ## Developer Workflows
 - **Edit/Add Questions**: Update `questions.json` (structure is flat, no references).
@@ -23,6 +31,23 @@ This project is a browser-based Greek language quiz app focused on grammar and s
 - **Styling**: Edit `styles.css`. Use CSS variables for color and spacing.
 - **Debugging**: Use browser dev tools. No custom debug commands.
 - **Testing**: Manual only. Open `index.html` in a browser.
+
+## Testing Guidelines
+
+### Overview
+This project does not currently have automated tests. However, manual testing is essential to ensure functionality and usability.
+
+### Manual Testing Steps
+1. Open `index.html` in a web browser.
+2. Navigate through the quiz categories and select questions.
+3. Verify that all questions display correctly and that the choices are selectable.
+4. Check that the submit button functions as expected and displays the correct feedback.
+5. Test the high score functionality by completing the quiz and checking local storage.
+6. Ensure that the layout is responsive on various screen sizes.
+
+### Future Considerations
+- Consider implementing automated tests using a framework like Jest or Mocha for unit testing.
+- Explore end-to-end testing tools like Cypress for comprehensive testing of user interactions.
 
 ## Examples
 - To add a new category: Add an object to `categories` in `questions.json` and provide matching SVGs if needed.
