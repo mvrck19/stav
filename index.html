@@ -7,6 +7,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Γραμματική</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
 </head>
 <body>
     <!-- Session Summary Modal -->
@@ -77,6 +79,35 @@
         let questions = [];
         let categories = [];
         let currentCategory = null;
+            // GSAP flip state helpers
+            let flipping = false;
+            function flipToAnswer() {
+                const inner = document.querySelector('.card-3d > .card-inner');
+                if (!inner || flipping) return;
+                flipping = true;
+                gsap.to(inner, {
+                    rotationY: 180,
+                    duration: 0.7,
+                    ease: 'power2.out',
+                    onComplete: () => { flipping = false; }
+                });
+            }
+            function flipToQuestion(immediate=false) {
+                const inner = document.querySelector('.card-3d > .card-inner');
+                if (!inner) return;
+                if (immediate) {
+                    gsap.set(inner, { rotationY: 0 });
+                    return;
+                }
+                if (flipping) return;
+                flipping = true;
+                gsap.to(inner, {
+                    rotationY: 0,
+                    duration: 0.7,
+                    ease: 'power2.out',
+                    onComplete: () => { flipping = false; }
+                });
+            }
     let answeredMap = {}; // key: question id => { chosenIndex, correct }
     let score = 0; // points: 10 per correct
     let targetScore = 0; // used for animation
@@ -241,7 +272,7 @@
             const answered = answeredMap[q.id];
             if (answered) {
                 // show answer side (review mode)
-                document.getElementById('card3d').classList.add('flipped');
+                    flipToAnswer();
                 document.querySelector('.question-section').classList.remove('active');
                 document.querySelector('.answer-section').classList.add('active');
                 updateAnswerInSVG(q, answered.chosenIndex);
@@ -254,7 +285,7 @@
             } else {
                 // ensure we are on question side and reset buttons
                 const card3d = document.getElementById('card3d');
-                card3d.classList.remove('flipped');
+                    flipToQuestion(true);
                 document.querySelector('.question-section').classList.add('active');
                 document.querySelector('.answer-section').classList.remove('active');
                 
@@ -568,9 +599,8 @@
             if (correct) score += 10; // add 10 points for correct answer
             persistState();
             
-            // flip to answer side immediately
-            const card3d = document.getElementById('card3d');
-            card3d.classList.add('flipped');
+            // flip to answer side via GSAP
+            flipToAnswer();
             document.querySelector('.question-section').classList.remove('active');
             document.querySelector('.answer-section').classList.add('active');
             updateAnswerInSVG(q, chosenOriginalIndex);
@@ -687,10 +717,7 @@
             if (backBtn) backBtn.style.display = 'none';
             
             // Reset card flip state
-            const card3d = document.getElementById('card3d');
-            if (card3d) {
-                card3d.classList.remove('flipped');
-            }
+            flipToQuestion(true);
             document.querySelector('.question-section')?.classList.add('active');
             document.querySelector('.answer-section')?.classList.remove('active');
             
