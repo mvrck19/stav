@@ -191,13 +191,10 @@ body {
 }
 .card-3d > .card-inner {
   transform-style: preserve-3d;
-  transition: transform 700ms cubic-bezier(.2,.9,.2,1);
   position: relative;
   width: 100%;
   height: 100%;
-}
-.card-3d.flipped > .card-inner {
-  transform: rotateY(180deg);
+  /* rotation handled via GSAP */
 }
 
 /* Ensure both faces share the same fixed dimensions */
